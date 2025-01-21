@@ -196,11 +196,85 @@ public class ChessPiece {
     }
 
     private Collection<ChessMove> bishopMoves(ChessBoard board, ChessPosition myPosition) {
-        throw new RuntimeException("Not implemented");
+        Collection<ChessMove> moves = new ArrayList<>();
+
+        // Upper right diagonal
+        for (int offset = 1; offset < 8; offset++) {
+            ChessPosition destination = new ChessPosition(myPosition.getRow() + offset, myPosition.getColumn() + offset);
+            if (destination.getRow() > 8 || destination.getColumn() > 8) {
+                break;
+            }
+            ChessPiece piece = board.getPiece(destination);
+            if (piece == null) {
+                moves.add(new ChessMove(myPosition, destination, null));
+            } else {
+                if (isEnemyPiece(piece)) {
+                    moves.add(new ChessMove(myPosition, destination, null));
+                }
+                break;
+            }
+        }
+
+        // Lower right diagonal
+        for (int offset = 1; offset < 8; offset++) {
+            ChessPosition destination = new ChessPosition(myPosition.getRow() - offset, myPosition.getColumn() + offset);
+            if (destination.getRow() < 1 || destination.getColumn() > 8) {
+                break;
+            }
+            ChessPiece piece = board.getPiece(destination);
+            if (piece == null) {
+                moves.add(new ChessMove(myPosition, destination, null));
+            } else {
+                if (isEnemyPiece(piece)) {
+                    moves.add(new ChessMove(myPosition, destination, null));
+                }
+                break;
+            }
+        }
+
+        // Lower left diagonal
+        for (int offset = 1; offset < 8; offset++) {
+            ChessPosition destination = new ChessPosition(myPosition.getRow() - offset, myPosition.getColumn() - offset);
+            if (destination.getRow() < 1 || destination.getColumn() < 1) {
+                break;
+            }
+            ChessPiece piece = board.getPiece(destination);
+            if (piece == null) {
+                moves.add(new ChessMove(myPosition, destination, null));
+            } else {
+                if (isEnemyPiece(piece)) {
+                    moves.add(new ChessMove(myPosition, destination, null));
+                }
+                break;
+            }
+        }
+
+        // Upper left diagonal
+        for (int offset = 1; offset < 8; offset++) {
+            ChessPosition destination = new ChessPosition(myPosition.getRow() + offset, myPosition.getColumn() - offset);
+            if (destination.getRow() > 8 || destination.getColumn() < 1) {
+                break;
+            }
+            ChessPiece piece = board.getPiece(destination);
+            if (piece == null) {
+                moves.add(new ChessMove(myPosition, destination, null));
+            } else {
+                if (isEnemyPiece(piece)) {
+                    moves.add(new ChessMove(myPosition, destination, null));
+                }
+                break;
+            }
+        }
+
+        return moves;
     }
 
     private Collection<ChessMove> queenMoves(ChessBoard board, ChessPosition myPosition) {
-        throw new RuntimeException("Not implemented");
+        // Queen moves as a bishop and rook combo
+        Collection<ChessMove> moves = bishopMoves(board, myPosition);
+        moves.addAll(rookMoves(board, myPosition));
+
+        return moves;
     }
 
     private Collection<ChessMove> kingMoves(ChessBoard board, ChessPosition myPosition) {
