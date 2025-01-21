@@ -1,6 +1,7 @@
 package chess;
 
 import java.util.HashMap;
+import java.util.Objects;
 
 /**
  * A chessboard that can hold and rearrange chess pieces.
@@ -71,5 +72,19 @@ public class ChessBoard {
             board.put(new ChessPosition(1, i), new ChessPiece(ChessGame.TeamColor.WHITE, row[i - 1]));
             board.put(new ChessPosition(8, i), new ChessPiece(ChessGame.TeamColor.BLACK, row[i - 1]));
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        ChessBoard that = (ChessBoard) o;
+        return Objects.equals(board, that.board);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(board);
     }
 }
