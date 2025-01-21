@@ -130,7 +130,65 @@ public class ChessPiece {
     }
 
     private Collection<ChessMove> rookMoves(ChessBoard board, ChessPosition myPosition) {
-        throw new RuntimeException("Not implemented");
+        // Regardless of team, rook moves as far as the board's edge or the first enemy piece along a row or column
+        Collection<ChessMove> moves = new ArrayList<>();
+        ChessPosition destination;
+
+        // Vertical column
+        for (int row = myPosition.getRow() + 1; row <= 8; row++) {
+            destination = new ChessPosition(row, myPosition.getColumn());
+            ChessPiece piece = board.getPiece(destination);
+            if (piece == null) {
+                moves.add(new ChessMove(myPosition, destination, null));
+            } else {
+                if (isEnemyPiece(piece)) {
+                    moves.add(new ChessMove(myPosition, destination, null));
+                }
+                break;
+            }
+        }
+
+        for (int row = myPosition.getRow() - 1; row >= 1; row--) {
+            destination = new ChessPosition(row, myPosition.getColumn());
+            ChessPiece piece = board.getPiece(destination);
+            if (piece == null) {
+                moves.add(new ChessMove(myPosition, destination, null));
+            } else {
+                if (isEnemyPiece(piece)) {
+                    moves.add(new ChessMove(myPosition, destination, null));
+                }
+                break;
+            }
+        }
+
+        // Horizontal row
+        for (int column = myPosition.getColumn() + 1; column <= 8; column++) {
+            destination = new ChessPosition(myPosition.getRow(), column);
+            ChessPiece piece = board.getPiece(destination);
+            if (piece == null) {
+                moves.add(new ChessMove(myPosition, destination, null));
+            } else {
+                if (isEnemyPiece(piece)) {
+                    moves.add(new ChessMove(myPosition, destination, null));
+                }
+                break;
+            }
+        }
+
+        for (int column = myPosition.getColumn() - 1; column >= 1; column--) {
+            destination = new ChessPosition(myPosition.getRow(), column);
+            ChessPiece piece = board.getPiece(destination);
+            if (piece == null) {
+                moves.add(new ChessMove(myPosition, destination, null));
+            } else {
+                if (isEnemyPiece(piece)) {
+                    moves.add(new ChessMove(myPosition, destination, null));
+                }
+                break;
+            }
+        }
+
+        return moves;
     }
 
     private Collection<ChessMove> knightMoves(ChessBoard board, ChessPosition myPosition) {
