@@ -192,7 +192,30 @@ public class ChessPiece {
     }
 
     private Collection<ChessMove> knightMoves(ChessBoard board, ChessPosition myPosition) {
-        throw new RuntimeException("Not implemented");
+        Collection<ChessMove> moves = new ArrayList<>();
+        int[][] offsets = {
+                {2, 1},
+                {2, -1},
+                {-2, 1},
+                {-2, -1},
+                {1, 2},
+                {1, -2},
+                {-1, 2},
+                {-1, -2}
+        };
+
+        for (int[] offset : offsets) {
+            ChessPosition destination = new ChessPosition(myPosition.getRow() + offset[0], myPosition.getColumn() + offset[1]);
+            if (!destination.isValid()) {
+                continue;
+            }
+            ChessPiece piece = board.getPiece(destination);
+            if (piece == null || isEnemyPiece(piece)) {
+                moves.add(new ChessMove(myPosition, destination, null));
+            }
+        }
+
+        return moves;
     }
 
     private Collection<ChessMove> bishopMoves(ChessBoard board, ChessPosition myPosition) {
@@ -278,6 +301,25 @@ public class ChessPiece {
     }
 
     private Collection<ChessMove> kingMoves(ChessBoard board, ChessPosition myPosition) {
-        throw new RuntimeException("Not implemented");
+        // King can move one square in any direction, so long it is empty or an enemy piece is there
+        Collection<ChessMove> moves = new ArrayList<>();
+        for (int rx = -1; rx <= 1; rx++) {
+            for (int cx = -1; cx <= 1; cx++) {
+                if (rx == 0 && cx == 0) {
+                    continue;
+                }
+
+                ChessPosition destination = new ChessPosition(myPosition.getRow() + rx, myPosition.getColumn() + cx);
+                if (!destination.isValid()) {
+                    continue;
+                }
+                ChessPiece piece = board.getPiece(destination);
+                if (piece == null || isEnemyPiece(piece)) {
+                    moves.add(new ChessMove(myPosition, destination, null));
+                }
+            }
+        }
+
+        return moves;
     }
 }
