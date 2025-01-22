@@ -78,14 +78,27 @@ public class ChessPiece {
         };
     }
 
+    /**
+     * @return int representing the direction the piece moves (mainly for pawns)
+     */
     private int getDirection() {
         return pieceColor == ChessGame.TeamColor.WHITE ? 1 : -1;
     }
 
+    /**
+     * @param piece Piece to check against
+     * @return boolean representing if the piece is an enemy piece
+     */
     private boolean isEnemyPiece(ChessPiece piece) {
         return piece != null && piece.getTeamColor() != pieceColor;
     }
 
+    /**
+     * Calculates pawn moves
+     * @param board Chess board to check against
+     * @param myPosition Position of the pawn
+     * @return Collection of valid moves
+     */
     private Collection<ChessMove> pawnMoves(ChessBoard board, ChessPosition myPosition) {
         Collection<ChessMove> moves = new ArrayList<>();
         // If clear, a pawn can move forward one square
@@ -129,6 +142,12 @@ public class ChessPiece {
         return promotionAccountedMoves;
     }
 
+    /**
+     * Calculates rook moves
+     * @param board Chess board to check against
+     * @param myPosition Position of the rook
+     * @return Collection of valid moves
+     */
     private Collection<ChessMove> rookMoves(ChessBoard board, ChessPosition myPosition) {
         // Regardless of team, rook moves as far as the board's edge or the first enemy piece along a row or column
         Collection<ChessMove> moves = new ArrayList<>();
@@ -191,6 +210,12 @@ public class ChessPiece {
         return moves;
     }
 
+    /**
+     * Calculates knight moves
+     * @param board Chess board to check against
+     * @param myPosition Position of the knight
+     * @return Collection of valid moves
+     */
     private Collection<ChessMove> knightMoves(ChessBoard board, ChessPosition myPosition) {
         Collection<ChessMove> moves = new ArrayList<>();
         int[][] offsets = {
@@ -218,6 +243,12 @@ public class ChessPiece {
         return moves;
     }
 
+    /**
+     * Calculates bishop moves
+     * @param board Chess board to check against
+     * @param myPosition Position of the bishop
+     * @return Collection of valid moves
+     */
     private Collection<ChessMove> bishopMoves(ChessBoard board, ChessPosition myPosition) {
         Collection<ChessMove> moves = new ArrayList<>();
 
@@ -292,6 +323,12 @@ public class ChessPiece {
         return moves;
     }
 
+    /**
+     * Calculates queen moves
+     * @param board Chess board to check against
+     * @param myPosition Position of the queen
+     * @return Collection of valid moves
+     */
     private Collection<ChessMove> queenMoves(ChessBoard board, ChessPosition myPosition) {
         // Queen moves as a bishop and rook combo
         Collection<ChessMove> moves = bishopMoves(board, myPosition);
@@ -300,6 +337,12 @@ public class ChessPiece {
         return moves;
     }
 
+    /**
+     * Calculates king moves
+     * @param board Chess board to check against
+     * @param myPosition Position of the king
+     * @return Collection of valid moves
+     */
     private Collection<ChessMove> kingMoves(ChessBoard board, ChessPosition myPosition) {
         // King can move one square in any direction, so long it is empty or an enemy piece is there
         Collection<ChessMove> moves = new ArrayList<>();
