@@ -64,6 +64,10 @@ public class ChessGame {
         throw new RuntimeException("Not implemented");
     }
 
+    private TeamColor enemyTeam(TeamColor team) {
+        return team == TeamColor.WHITE ? TeamColor.BLACK : TeamColor.WHITE;
+    }
+
     /**
      * Determines if the given team is in check
      *
@@ -71,7 +75,18 @@ public class ChessGame {
      * @return True if the specified team is in check
      */
     public boolean isInCheck(TeamColor teamColor) {
-        throw new RuntimeException("Not implemented");
+        // A team is in check if any enemy piece is able to move onto its square
+        ChessPosition kingPosition = board.findTeamKing(teamColor);
+        Collection<ChessMove> enemyMoves = board.getTeamMoves(enemyTeam(teamColor));
+
+        // If the king's position is in the destination of any enemy move, we are in check
+        for (ChessMove move : enemyMoves) {
+            if (move.getEndPosition() == kingPosition) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -101,7 +116,7 @@ public class ChessGame {
      * @param board the new board to use
      */
     public void setBoard(ChessBoard board) {
-        throw new RuntimeException("Not implemented");
+        this.board = board;
     }
 
     /**

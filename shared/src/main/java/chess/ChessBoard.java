@@ -1,7 +1,6 @@
 package chess;
 
-import java.util.HashMap;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * A chessboard that can hold and rearrange chess pieces.
@@ -72,6 +71,25 @@ public class ChessBoard {
             board.put(new ChessPosition(1, i), new ChessPiece(ChessGame.TeamColor.WHITE, row[i - 1]));
             board.put(new ChessPosition(8, i), new ChessPiece(ChessGame.TeamColor.BLACK, row[i - 1]));
         }
+    }
+
+    public Collection<ChessMove> getTeamMoves(ChessGame.TeamColor team) {
+        Collection<ChessMove> moves = new ArrayList<>();
+
+        board.forEach((position, piece) -> {
+            moves.addAll(piece.pieceMoves(this, position));
+        });
+
+        return moves;
+    }
+
+    public ChessPosition findTeamKing(ChessGame.TeamColor team) {
+        for (Map.Entry<ChessPosition, ChessPiece> entry : board.entrySet()) {
+            if (entry.getValue().getTeamColor() == team && entry.getValue().getPieceType() == ChessPiece.PieceType.KING) {
+                return entry.getKey();
+            }
+        }
+        return null;
     }
 
     @Override
