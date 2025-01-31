@@ -1,5 +1,8 @@
 package chess;
 
+import jdk.jshell.spi.ExecutionControl;
+
+import java.util.ArrayList;
 import java.util.Collection;
 
 /**
@@ -51,7 +54,24 @@ public class ChessGame {
      * startPosition
      */
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
-        throw new RuntimeException("Not implemented");
+        // A move is valid if moving that piece will not result in the king being in check
+        Collection<ChessMove> baseMoves = board.getPiece(startPosition).pieceMoves(board, startPosition);
+        Collection<ChessMove> validMoves = new ArrayList<>();
+        TeamColor pieceTeam = board.getPiece(startPosition).getTeamColor();
+
+        // Save a copy of the board
+        ChessBoard startingBoard = board.createCopy();
+        for (ChessMove testMove : baseMoves) {
+            // Simulate the move
+            makeMove(testMove);
+            if (!isInCheck(pieceTeam)) {
+                validMoves.add(testMove);
+            }
+            // Reset the board
+            setBoard(startingBoard.createCopy());
+        }
+
+        return validMoves;
     }
 
     /**
@@ -90,12 +110,34 @@ public class ChessGame {
     }
 
     /**
+     * Returns all the valid moves for a given team
+     * @param teamColor which team to get the moves for
+     * @return Collection of all the valid moves for the team
+     */
+    public Collection<ChessMove> getAllValidMoves(TeamColor teamColor) {
+        Collection<ChessPosition> teamPieces = board.getTeamPieceLocations(teamColor);
+        Collection<ChessMove> moves = new ArrayList<>();
+
+        for (ChessPosition position : teamPieces) {
+            moves.addAll(validMoves(position));
+        }
+
+        return moves;
+    }
+
+    /**
      * Determines if the given team is in checkmate
      *
      * @param teamColor which team to check for checkmate
      * @return True if the specified team is in checkmate
      */
     public boolean isInCheckmate(TeamColor teamColor) {
+        // In order to be in checkmate, the team's king must be in check
+        if (!isInCheck(teamColor)) {
+            return false;
+        }
+
+        // A team is checkmated if they have no valid moves
         throw new RuntimeException("Not implemented");
     }
 

@@ -85,6 +85,18 @@ public class ChessBoard {
         return moves;
     }
 
+    public Collection<ChessPosition> getTeamPieceLocations(ChessGame.TeamColor team) {
+        Collection<ChessPosition> positions = new ArrayList<>();
+
+        board.forEach((position, piece) -> {
+            if (getPiece(position).getTeamColor() == team) {
+                positions.add(position);
+            }
+        });
+
+        return positions;
+    }
+
     public ChessPosition findTeamKing(ChessGame.TeamColor team) {
         for (Map.Entry<ChessPosition, ChessPiece> entry : board.entrySet()) {
             if (entry.getValue().getTeamColor() == team && entry.getValue().getPieceType() == ChessPiece.PieceType.KING) {
@@ -106,5 +118,11 @@ public class ChessBoard {
     @Override
     public int hashCode() {
         return Objects.hashCode(board);
+    }
+
+    public ChessBoard createCopy() {
+        ChessBoard copyBoard = new ChessBoard();
+        copyBoard.board = (HashMap<ChessPosition, ChessPiece>) board.clone();
+        return copyBoard;
     }
 }
