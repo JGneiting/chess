@@ -77,7 +77,9 @@ public class ChessBoard {
         Collection<ChessMove> moves = new ArrayList<>();
 
         board.forEach((position, piece) -> {
-            moves.addAll(piece.pieceMoves(this, position));
+            if (getPiece(position).getTeamColor() == team) {
+                moves.addAll(piece.pieceMoves(this, position));
+            }
         });
 
         return moves;

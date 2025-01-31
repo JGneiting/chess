@@ -81,7 +81,7 @@ public class ChessGame {
 
         // If the king's position is in the destination of any enemy move, we are in check
         for (ChessMove move : enemyMoves) {
-            if (move.getEndPosition() == kingPosition) {
+            if (move.getEndPosition().equals(kingPosition)) {
                 return true;
             }
         }
