@@ -106,6 +106,10 @@ public class ChessBoard {
         return null;
     }
 
+    public void removePiece(ChessPosition position) {
+        board.remove(position);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) {

@@ -63,7 +63,7 @@ public class ChessGame {
         ChessBoard startingBoard = board.createCopy();
         for (ChessMove testMove : baseMoves) {
             // Simulate the move
-            makeMove(testMove);
+            makeMoveDirect(testMove);
             if (!isInCheck(pieceTeam)) {
                 validMoves.add(testMove);
             }
@@ -74,6 +74,17 @@ public class ChessGame {
         return validMoves;
     }
 
+    private void makeMoveDirect(ChessMove move) {
+        ChessPiece piece = board.getPiece(move.getStartPosition());
+        board.removePiece(move.getStartPosition());
+
+        if (move.getPromotionPiece() == null) {
+            board.addPiece(move.getEndPosition(), piece);
+        } else {
+            board.addPiece(move.getEndPosition(), new ChessPiece(piece.getTeamColor(), move.getPromotionPiece()));
+        }
+    }
+
     /**
      * Makes a move in a chess game
      *
@@ -81,7 +92,21 @@ public class ChessGame {
      * @throws InvalidMoveException if move is invalid
      */
     public void makeMove(ChessMove move) throws InvalidMoveException {
-        throw new RuntimeException("Not implemented");
+        // Check if move is in the valid set of moves for this piece
+        if (board.getPiece(move.getStartPosition()) == null ||
+            board.getPiece(move.getStartPosition()).getTeamColor() != currentTurn
+            ) {
+            throw new InvalidMoveException();
+        }
+
+        Collection<ChessMove> validMoves = validMoves(move.getStartPosition());
+        if (!validMoves.contains(move)) {
+            throw new InvalidMoveException();
+        }
+
+        // Make move
+        makeMoveDirect(move);
+        currentTurn = enemyTeam(currentTurn);
     }
 
     private TeamColor enemyTeam(TeamColor team) {
