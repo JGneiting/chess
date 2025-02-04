@@ -163,7 +163,15 @@ public class ChessGame {
         }
 
         // A team is checkmated if they have no valid moves
-        throw new RuntimeException("Not implemented");
+        Collection<ChessPosition> teamPositions = board.getTeamPieceLocations(teamColor);
+        for (ChessPosition position : teamPositions) {
+            Collection<ChessMove> validMoves = validMoves(position);
+            if (!validMoves.isEmpty()) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
