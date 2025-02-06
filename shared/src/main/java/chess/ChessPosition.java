@@ -34,6 +34,10 @@ public class ChessPosition {
         return col;
     }
 
+    public ChessPosition applyOffset(int rowX, int colX) {
+        return new ChessPosition(this.row + rowX, this.col + colX);
+    }
+
     /**
      * @return boolean if this position is valid
      */
@@ -52,6 +56,6 @@ public class ChessPosition {
 
     @Override
     public int hashCode() {
-        return Objects.hash(row, col);
+        return Objects.hash(this.row, this.col);
     }
 }

@@ -14,10 +14,14 @@ public class ChessPiece {
 
     private ChessGame.TeamColor pieceColor;
     private PieceType type;
+    private boolean hasMoved;
+    private boolean doubleMove;
 
     public ChessPiece(ChessGame.TeamColor pieceColor, ChessPiece.PieceType type) {
         this.pieceColor = pieceColor;
         this.type = type;
+        hasMoved = false;
+        doubleMove = false;
     }
 
     @Override
@@ -94,6 +98,25 @@ public class ChessPiece {
     }
 
     /**
+     *
+     */
+    public void setPieceMoved() {
+        hasMoved = true;
+    }
+
+    public boolean hasMoved() {
+        return hasMoved;
+    }
+
+    public void setDoubleMove(boolean status) {
+        doubleMove = status;
+    }
+
+    public boolean hasDoubleMoved() {
+        return doubleMove;
+    }
+
+    /**
      * Calculates pawn moves
      * @param board Chess board to check against
      * @param myPosition Position of the pawn
@@ -112,7 +135,7 @@ public class ChessPiece {
             ChessPosition destination = new ChessPosition(myPosition.getRow() + 2 * getDirection(), myPosition.getColumn());
             if (board.getPiece(new ChessPosition(myPosition.getRow() + getDirection(), myPosition.getColumn())) == null
                     && board.getPiece(destination) == null) {
-                moves.add(new ChessMove(myPosition, destination, null));
+                moves.add(new SpecialMove(myPosition, SpecialMove.MoveType.DOUBLE_MOVE, SpecialMove.MoveSide.LEFT));
             }
         }
 
