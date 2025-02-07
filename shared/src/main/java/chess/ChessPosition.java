@@ -10,8 +10,8 @@ import java.util.Objects;
  */
 public class ChessPosition {
 
-    private int row;
-    private int col;
+    private final int row;
+    private final int col;
 
     public ChessPosition(int row, int col) {
         this.row = row;
@@ -34,6 +34,12 @@ public class ChessPosition {
         return col;
     }
 
+    /**
+     * Returns a new position with the given offset
+     * @param rowX Row delta
+     * @param colX Column delta
+     * @return Chess position
+     */
     public ChessPosition applyOffset(int rowX, int colX) {
         return new ChessPosition(this.row + rowX, this.col + colX);
     }
@@ -41,8 +47,8 @@ public class ChessPosition {
     /**
      * @return boolean if this position is valid
      */
-    public boolean isValid() {
-        return row >= 1 && row <= 8 && col >= 1 && col <= 8;
+    public boolean invalidPosition() {
+        return row < 1 || row > 8 || col < 1 || col > 8;
     }
 
     @Override

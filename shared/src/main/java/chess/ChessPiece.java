@@ -97,9 +97,6 @@ public class ChessPiece {
         return piece != null && piece.getTeamColor() != pieceColor;
     }
 
-    /**
-     *
-     */
     public void setPieceMoved() {
         hasMoved = true;
     }
@@ -202,10 +199,19 @@ public class ChessPiece {
         return moves;
     }
 
+    /**
+     * Adds a move to the set of valid moves if the destination is valid
+     * @param board Board to check against
+     * @param myPosition Starting position
+     * @param moves Moves to add to
+     * @param row Row of destination
+     * @param col Column of destination
+     * @return True if this move will capture (Or is invalid)
+     */
     private boolean addIfValid(ChessBoard board, ChessPosition myPosition, Collection<ChessMove> moves, int row, int col) {
         ChessPosition destination;
         destination = new ChessPosition(row, col);
-        if (!destination.isValid()) {
+        if (destination.invalidPosition()) {
             return true;
         }
         ChessPiece piece = board.getPiece(destination);
@@ -241,7 +247,7 @@ public class ChessPiece {
 
         for (int[] offset : offsets) {
             ChessPosition destination = new ChessPosition(myPosition.getRow() + offset[0], myPosition.getColumn() + offset[1]);
-            if (!destination.isValid()) {
+            if (destination.invalidPosition()) {
                 continue;
             }
             ChessPiece piece = board.getPiece(destination);
@@ -306,7 +312,7 @@ public class ChessPiece {
                 }
 
                 ChessPosition destination = new ChessPosition(myPosition.getRow() + rx, myPosition.getColumn() + cx);
-                if (!destination.isValid()) {
+                if (destination.invalidPosition()) {
                     continue;
                 }
                 ChessPiece piece = board.getPiece(destination);

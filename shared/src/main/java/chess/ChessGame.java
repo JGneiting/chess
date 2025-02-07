@@ -77,6 +77,13 @@ public class ChessGame {
         return validMoves;
     }
 
+    /**
+     * Adds the castling special moves if the required conditions are met
+     * @param startPosition Position of target piece
+     * @param piece Piece of interest
+     * @param pieceTeam Piece's team color
+     * @param validMoves Moves this piece can make
+     */
     private void checkCastling(ChessPosition startPosition, ChessPiece piece, TeamColor pieceTeam, Collection<ChessMove> validMoves) {
         // If we are a king, check if we can castle
         if (piece.getPieceType() == ChessPiece.PieceType.KING) {
@@ -119,6 +126,13 @@ public class ChessGame {
         }
     }
 
+    /**
+     * Adds the en passant special move if the conditions are met
+     * @param startPosition Position of the piece to check
+     * @param piece Piece of interest
+     * @param pieceTeam Piece's team color
+     * @param validMoves Valid moves this piece can perform
+     */
     private void checkEnPassant(ChessPosition startPosition, ChessPiece piece, TeamColor pieceTeam, Collection<ChessMove> validMoves) {
         // If we are a pawn with an enemy pawn next to us that has double moved, we can capture it
         if (piece.getPieceType() == ChessPiece.PieceType.PAWN) {
@@ -139,6 +153,12 @@ public class ChessGame {
         }
     }
 
+    /**
+     * Generates the chess positions 3 squares horizontally in the given direction from the reference
+     * @param reference Position to offset from
+     * @param direction Direction to offset in
+     * @return Collection of the three squares of interest
+     */
     private Collection<ChessPosition> generateInterestSquares(ChessPosition reference, int direction) {
         Collection<ChessPosition> squares = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
@@ -147,6 +167,10 @@ public class ChessGame {
         return squares;
     }
 
+    /**
+     * Makes a move directly on the chessboard with no checks
+     * @param move Move to perform
+     */
     private void makeMoveDirect(ChessMove move) {
         ChessPiece piece = board.getPiece(move.getStartPosition());
         board.removePiece(move.getStartPosition());
@@ -203,6 +227,11 @@ public class ChessGame {
         }
     }
 
+    /**
+     * Returns the enemy team's color
+     * @param team team to invert
+     * @return enemy team color
+     */
     private TeamColor enemyTeam(TeamColor team) {
         return team == TeamColor.WHITE ? TeamColor.BLACK : TeamColor.WHITE;
     }
@@ -257,6 +286,15 @@ public class ChessGame {
         }
 
         // A team is checkmated if they have no valid moves
+        return noValidMoves(teamColor);
+    }
+
+    /**
+     * Returns if the indicated team has any valid moves
+     * @param teamColor Team color to check
+     * @return true if team has no valid moves
+     */
+    private boolean noValidMoves(TeamColor teamColor) {
         Collection<ChessPosition> teamPositions = board.getTeamPieceLocations(teamColor);
         for (ChessPosition position : teamPositions) {
             Collection<ChessMove> validMoves = validMoves(position);
@@ -282,15 +320,7 @@ public class ChessGame {
         }
 
         // A team is stalemated if they have no valid moves
-        Collection<ChessPosition> teamPositions = board.getTeamPieceLocations(teamColor);
-        for (ChessPosition position : teamPositions) {
-            Collection<ChessMove> validMoves = validMoves(position);
-            if (!validMoves.isEmpty()) {
-                return false;
-            }
-        }
-
-        return true;
+        return noValidMoves(teamColor);
     }
 
     /**

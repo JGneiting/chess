@@ -73,6 +73,11 @@ public class ChessBoard {
         }
     }
 
+    /**
+     * Gets all the moves a team can make
+     * @param team Team to check
+     * @return Collection of all moves the team can make
+     */
     public Collection<ChessMove> getTeamMoves(ChessGame.TeamColor team) {
         Collection<ChessMove> moves = new ArrayList<>();
 
@@ -85,10 +90,15 @@ public class ChessBoard {
         return moves;
     }
 
+    /**
+     * Gets the position of all the team's pieces
+     * @param team Team of interest
+     * @return List of piece positions
+     */
     public Collection<ChessPosition> getTeamPieceLocations(ChessGame.TeamColor team) {
         Collection<ChessPosition> positions = new ArrayList<>();
 
-        board.forEach((position, piece) -> {
+        board.forEach((position, _) -> {
             if (getPiece(position).getTeamColor() == team) {
                 positions.add(position);
             }
@@ -97,6 +107,11 @@ public class ChessBoard {
         return positions;
     }
 
+    /**
+     * Gets the position of the team's king
+     * @param team Color of king to find
+     * @return Position of the king
+     */
     public ChessPosition findTeamKing(ChessGame.TeamColor team) {
         for (Map.Entry<ChessPosition, ChessPiece> entry : board.entrySet()) {
             if (entry.getValue().getTeamColor() == team && entry.getValue().getPieceType() == ChessPiece.PieceType.KING) {
@@ -106,6 +121,10 @@ public class ChessBoard {
         return null;
     }
 
+    /**
+     * Removes the piece at the given position
+     * @param position target position
+     */
     public void removePiece(ChessPosition position) {
         board.remove(position);
     }
@@ -124,6 +143,10 @@ public class ChessBoard {
         return Objects.hashCode(board);
     }
 
+    /**
+     * Creates a deep copy of the chessboard
+     * @return copy of board
+     */
     public ChessBoard createCopy() {
         ChessBoard copyBoard = new ChessBoard();
         copyBoard.board = (HashMap<ChessPosition, ChessPiece>) board.clone();
