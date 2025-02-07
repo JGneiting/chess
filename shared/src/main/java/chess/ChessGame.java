@@ -1,11 +1,7 @@
 package chess;
 
-import jdk.jshell.spi.ExecutionControl;
-
-import java.sql.Array;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 /**
  * For a class that can manage a chess game, making moves on a board
@@ -74,6 +70,14 @@ public class ChessGame {
             setBoard(startingBoard.createCopy());
         }
 
+        // Check for specialty moves
+        checkCastling(startPosition, piece, pieceTeam, validMoves);
+        checkEnPassant(startPosition, piece, pieceTeam, validMoves);
+
+        return validMoves;
+    }
+
+    private void checkCastling(ChessPosition startPosition, ChessPiece piece, TeamColor pieceTeam, Collection<ChessMove> validMoves) {
         // If we are a king, check if we can castle
         if (piece.getPieceType() == ChessPiece.PieceType.KING) {
             SpecialMove.MoveSide[] sides = {
@@ -83,9 +87,9 @@ public class ChessGame {
             for (SpecialMove.MoveSide side : sides) {
                 int direction = side == SpecialMove.MoveSide.LEFT ? -1 : 1;
                 // To castle right, the king must not have moved, as well as the rook in the same row in that direction
-                if (!piece.hasMoved()) {
+                if (piece.hasNotMoved()) {
                     ChessPiece rook = board.getPiece(new ChessPosition(startPosition.getRow(), side == SpecialMove.MoveSide.LEFT ? 1 : 8));
-                    if (rook != null && !rook.hasMoved()) {
+                    if (rook != null && rook.hasNotMoved()) {
                         // Two squares right must be empty
                         boolean open = true;
                         for (int i = 1; i <= (side == SpecialMove.MoveSide.LEFT ? 3 : 2); i++) {
@@ -113,7 +117,9 @@ public class ChessGame {
                 }
             }
         }
+    }
 
+    private void checkEnPassant(ChessPosition startPosition, ChessPiece piece, TeamColor pieceTeam, Collection<ChessMove> validMoves) {
         // If we are a pawn with an enemy pawn next to us that has double moved, we can capture it
         if (piece.getPieceType() == ChessPiece.PieceType.PAWN) {
             SpecialMove.MoveSide[] sides = {
@@ -131,8 +137,6 @@ public class ChessGame {
                 }
             }
         }
-
-        return validMoves;
     }
 
     private Collection<ChessPosition> generateInterestSquares(ChessPosition reference, int direction) {
