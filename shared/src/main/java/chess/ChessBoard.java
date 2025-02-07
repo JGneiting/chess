@@ -98,7 +98,7 @@ public class ChessBoard {
     public Collection<ChessPosition> getTeamPieceLocations(ChessGame.TeamColor team) {
         Collection<ChessPosition> positions = new ArrayList<>();
 
-        board.forEach((position, _) -> {
+        board.forEach((position, piece) -> {
             if (getPiece(position).getTeamColor() == team) {
                 positions.add(position);
             }
