@@ -1,0 +1,5 @@
+package dataaccess;
+
+interface UserDAO {
+
+}
