@@ -1,5 +1,17 @@
 package service;
 
+import dataaccess.MemoryAuthDAO;
+import dataaccess.MemoryGameDAO;
+import dataaccess.MemoryUserDAO;
+
 public class DatabaseService {
-    public void clearDatabase() {};
+    static MemoryUserDAO userDB = new MemoryUserDAO();
+    static MemoryGameDAO gameDB = new MemoryGameDAO();
+    static MemoryAuthDAO authDB = new MemoryAuthDAO();
+
+    public void clearDatabase() {
+        userDB.clear();
+        gameDB.clear();
+        authDB.clear();
+    }
 }
