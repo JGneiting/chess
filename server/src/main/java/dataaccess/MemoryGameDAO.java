@@ -20,12 +20,12 @@ public class MemoryGameDAO implements GameDAO{
     }
 
     @Override
-    public GameData getGame(String gameID) {
+    public GameData getGame(int gameID) {
         GameData locatedGame = null;
 
         // Try to find game in list
         for (GameData game : games) {
-            if (game.gameID().equals(gameID)) {
+            if (game.gameID() == gameID) {
                 locatedGame = game;
                 break;
             }

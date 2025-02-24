@@ -2,17 +2,16 @@ package service;
 
 import model.*;
 import org.eclipse.jetty.server.Authentication;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import static org.eclipse.jetty.util.LazyList.size;
 import static org.junit.jupiter.api.Assertions.*;
 
+
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class GameServiceTests {
     static private String userAuthToken;
-    static private String gameID;
+    static private int gameID;
 
     @BeforeAll
     static public void createUser() {
@@ -31,7 +30,7 @@ public class GameServiceTests {
         NewGameRequest request = new NewGameRequest(userAuthToken, "myGame");
         assertDoesNotThrow(() -> {
             NewGameResult result = service.newGame(request);
-            assertNotEquals("", result.gameID());
+            assertNotEquals(0, result.gameID());
             gameID = result.gameID();
         });
 
@@ -45,7 +44,7 @@ public class GameServiceTests {
         NewGameRequest unauthorizedRequest = new NewGameRequest("", "myBetterGame");
         ServiceError noauthError = assertThrows(ServiceError.class, () -> service.newGame(unauthorizedRequest));
         assertEquals(401, noauthError.getCode());
-        assertEquals("Error: unauthorized", error.getMessage());
+        assertEquals("Error: unauthorized", noauthError.getMessage());
     }
 
     @Test
@@ -94,7 +93,7 @@ public class GameServiceTests {
         assertEquals("Error: already taken", takenError.getMessage());
 
         // Attempt to join nonexistent game
-        JoinGameRequest joinBadGame = new JoinGameRequest(userAuthToken, "WHITE", "aaaa");
+        JoinGameRequest joinBadGame = new JoinGameRequest(userAuthToken, "WHITE", gameID+1);
         ServiceError badRequest = assertThrows(ServiceError.class, () -> service.joinGame(joinBadGame));
         assertEquals(400, badRequest.getCode());
         assertEquals("Error: bad request", badRequest.getMessage());
