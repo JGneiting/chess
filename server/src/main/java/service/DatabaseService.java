@@ -9,7 +9,7 @@ public class DatabaseService {
     static MemoryGameDAO gameDB = new MemoryGameDAO();
     static MemoryAuthDAO authDB = new MemoryAuthDAO();
 
-    public void clearDatabase() {
+    public static void clearDatabase() {
         userDB.clear();
         gameDB.clear();
         authDB.clear();

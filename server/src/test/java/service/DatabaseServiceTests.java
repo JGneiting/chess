@@ -7,9 +7,7 @@ public class DatabaseServiceTests {
 
     @Test
     public void clearDB() {
-        DatabaseService service = new DatabaseService();
-
         // Clear the database
-        assertDoesNotThrow(service::clearDatabase);
+        assertDoesNotThrow(DatabaseService::clearDatabase);
     }
 }

@@ -15,7 +15,7 @@ public class GameService {
     static MemoryGameDAO gameDB = new MemoryGameDAO();
     static MemoryAuthDAO authDB = new MemoryAuthDAO();
 
-    public ListGamesResult listGames(ListGamesRequest listRequest) throws ServiceError {
+    public static ListGamesResult listGames(ListGamesRequest listRequest) throws ServiceError {
         // Check authentication
         UserService.checkAuth(listRequest.authToken());
 
@@ -23,7 +23,7 @@ public class GameService {
         return new ListGamesResult(gameDB.listGames().toArray(new GameData[0]));
     }
 
-    public NewGameResult newGame(NewGameRequest newGameRequest) throws ServiceError {
+    public static NewGameResult newGame(NewGameRequest newGameRequest) throws ServiceError {
         // Check authentication
         UserService.checkAuth(newGameRequest.authToken());
 
@@ -56,7 +56,7 @@ public class GameService {
         return new NewGameResult(gameID);
     }
 
-    public void joinGame(JoinGameRequest joinRequest) throws ServiceError {
+    public static void joinGame(JoinGameRequest joinRequest) throws ServiceError {
         // Check authentication
         AuthData auth = UserService.checkAuth(joinRequest.authToken());
 
