@@ -6,7 +6,6 @@ import dataaccess.MemoryAuthDAO;
 import dataaccess.MemoryGameDAO;
 import model.*;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Random;
@@ -49,7 +48,7 @@ public class GameService {
         // Create a new chessgame
         ChessGame newGame = new ChessGame();
 
-        GameData game = new GameData(newGame, newGameRequest.gameName(), "", "", gameID);
+        GameData game = new GameData(newGame, newGameRequest.gameName(), null, null, gameID);
         gameDB.createGame(game);
 
         // Create response
@@ -61,7 +60,7 @@ public class GameService {
         AuthData auth = UserService.checkAuth(joinRequest.authToken());
 
         // Check to make sure that the request is valid
-        if (!(joinRequest.playerColor().equals("WHITE") || joinRequest.playerColor().equals("BLACK"))) {
+        if (joinRequest.playerColor() == null || !(joinRequest.playerColor().equals("WHITE") || joinRequest.playerColor().equals("BLACK"))) {
             throw new ServiceError("Error: bad request", 400);
         }
         GameData game = gameDB.getGame(joinRequest.gameID());
@@ -84,14 +83,14 @@ public class GameService {
         GameData newGame;
         // Check to see if there is a player assigned to the desired team
         if (joinRequest.playerColor().equals("WHITE")) {
-            if (game.whiteUsername().isEmpty()) {
+            if (game.whiteUsername() == null) {
                 // Join the game
                 newGame = new GameData(game.game(), game.gameName(), game.blackUsername(), auth.username(), game.gameID());
             } else {
                 throw new ServiceError("Error: already taken", 403);
             }
         } else {
-            if (game.blackUsername().isEmpty()) {
+            if (game.blackUsername() == null) {
                 // Join game
                 newGame = new GameData(game.game(), game.gameName(), auth.username(), game.whiteUsername(), game.gameID());
             } else {

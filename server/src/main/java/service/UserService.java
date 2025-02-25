@@ -26,7 +26,8 @@ public class UserService {
 
     public static RegisterResult register(RegisterRequest registerRequest) throws ServiceError {
         // Validate that all required information is in the register request
-        if (registerRequest.username().isEmpty() || registerRequest.password().isEmpty() || registerRequest.email().isEmpty()) {
+        if (registerRequest.username() == null || registerRequest.password() == null || registerRequest.email() == null ||
+                registerRequest.username().isEmpty() || registerRequest.password().isEmpty() || registerRequest.email().isEmpty()) {
             // Bad Request
             throw new ServiceError("Error: bad request", 400);
         }
@@ -54,7 +55,7 @@ public class UserService {
         UserData user = userDB.getUser(loginRequest.username());
 
         // Check if the user submitted the correct password
-        if (!user.password().equals(loginRequest.password())) {
+        if (user == null || !user.password().equals(loginRequest.password())) {
             throw new ServiceError("Error: unauthorized", 401);
         }
 

@@ -78,7 +78,7 @@ public class GameServiceTests {
 
         assertEquals(gameID, game.gameID());
         assertEquals("tester12", game.whiteUsername());
-        assertEquals("", game.blackUsername());
+        assertNull(game.blackUsername());
 
         // Attempt to join white team again
         ServiceError takenError = assertThrows(ServiceError.class, () -> GameService.joinGame(joinWhite));
