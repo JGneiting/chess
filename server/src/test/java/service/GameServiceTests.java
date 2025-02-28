@@ -14,6 +14,10 @@ public class GameServiceTests {
 
     @BeforeAll
     static public void createUser() {
+        // Clear database
+        DatabaseService.clearDatabase();
+
+        // Create a test user
         RegisterRequest request = new RegisterRequest("tester12", "qwerty", "me@me.com");
         RegisterResult result = UserService.register(request);
         userAuthToken = result.authToken();
@@ -29,13 +33,21 @@ public class GameServiceTests {
             assertNotEquals(0, result.gameID());
             gameID = result.gameID();
         });
+    }
 
+    @Test
+    @Order(2)
+    public void createNoName() {
         // Create a game with no name
         NewGameRequest namelessRequest = new NewGameRequest(userAuthToken, "");
         ServiceError error = assertThrows(ServiceError.class, () -> GameService.newGame(namelessRequest));
         assertEquals(400, error.getCode());
         assertEquals("Error: bad request", error.getMessage());
+    }
 
+    @Test
+    @Order(3)
+    public void createNoAuth() {
         // Create a game with no auth token
         NewGameRequest unauthorizedRequest = new NewGameRequest("", "myBetterGame");
         ServiceError noauthError = assertThrows(ServiceError.class, () -> GameService.newGame(unauthorizedRequest));
@@ -44,7 +56,7 @@ public class GameServiceTests {
     }
 
     @Test
-    @Order(2)
+    @Order(4)
     public void listGames() {
         // A game should already exist in the database from the previous test
         ListGamesRequest request = new ListGamesRequest(userAuthToken);
@@ -54,7 +66,11 @@ public class GameServiceTests {
         GameData game = result.games()[0];
         assertEquals("myGame", game.gameName());
         assertEquals(gameID, game.gameID());
+    }
 
+    @Test
+    @Order(5)
+    public void listNoAuth() {
         // Request games without an auth token
         ListGamesRequest noauthRequest = new ListGamesRequest("");
         ServiceError error = assertThrows(ServiceError.class, () -> GameService.listGames(noauthRequest));
@@ -63,7 +79,7 @@ public class GameServiceTests {
     }
 
     @Test
-    @Order(3)
+    @Order(6)
     public void joinGame() {
         // A game should exist already, join it
         JoinGameRequest joinWhite = new JoinGameRequest(userAuthToken, "WHITE", gameID);
@@ -76,18 +92,32 @@ public class GameServiceTests {
         assertEquals(gameID, game.gameID());
         assertEquals("tester12", game.whiteUsername());
         assertNull(game.blackUsername());
+    }
+
+    @Test
+    @Order(7)
+    public void joinTeamTaken() {
+        JoinGameRequest joinWhite = new JoinGameRequest(userAuthToken, "WHITE", gameID);
 
         // Attempt to join white team again
         ServiceError takenError = assertThrows(ServiceError.class, () -> GameService.joinGame(joinWhite));
         assertEquals(403, takenError.getCode());
         assertEquals("Error: already taken", takenError.getMessage());
+    }
 
+    @Test
+    @Order(8)
+    public void joinNonexistentGame() {
         // Attempt to join nonexistent game
         JoinGameRequest joinBadGame = new JoinGameRequest(userAuthToken, "WHITE", gameID+1);
         ServiceError badRequest = assertThrows(ServiceError.class, () -> GameService.joinGame(joinBadGame));
         assertEquals(400, badRequest.getCode());
         assertEquals("Error: bad request", badRequest.getMessage());
+    }
 
+    @Test
+    @Order(9)
+    public void joinNoAuth() {
         // Join without auth
         JoinGameRequest joinNoauth = new JoinGameRequest("", "BLACK", gameID);
         ServiceError noAuth = assertThrows(ServiceError.class, () -> GameService.joinGame(joinNoauth));
