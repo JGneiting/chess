@@ -93,33 +93,33 @@ public class ChessGame {
             };
             for (SpecialMove.MoveSide side : sides) {
                 int direction = side == SpecialMove.MoveSide.LEFT ? -1 : 1;
+                ChessPiece rook = board.getPiece(new ChessPosition(startPosition.getRow(), side == SpecialMove.MoveSide.LEFT ? 1 : 8));
                 // To castle right, the king must not have moved, as well as the rook in the same row in that direction
-                if (piece.hasNotMoved()) {
-                    ChessPiece rook = board.getPiece(new ChessPosition(startPosition.getRow(), side == SpecialMove.MoveSide.LEFT ? 1 : 8));
-                    if (rook != null && rook.hasNotMoved()) {
-                        // Two squares right must be empty
-                        boolean open = true;
-                        for (int i = 1; i <= (side == SpecialMove.MoveSide.LEFT ? 3 : 2); i++) {
-                            if (board.getPiece(new ChessPosition(startPosition.getRow(), startPosition.getColumn() + (direction * i))) != null) {
-                                open = false;
-                            }
+                if (piece.hasNotMoved() && rook != null && rook.hasNotMoved()) {
+                    // Two squares right must be empty
+                    boolean open = true;
+                    for (int i = 1; i <= (side == SpecialMove.MoveSide.LEFT ? 3 : 2); i++) {
+                        if (board.getPiece(new ChessPosition(startPosition.getRow(), startPosition.getColumn() + (direction * i))) != null) {
+                            open = false;
                         }
-                        if (open) {
-                            // We can castle on this side if none of the three squares on the right are targeted by an enemy
-                            boolean passesThroughCheck = false;
-                            Collection<ChessMove> enemyMoves = board.getTeamMoves(enemyTeam(pieceTeam));
-                            Collection<ChessPosition> interestSquares = generateInterestSquares(startPosition, direction);
-                            for (ChessMove move : enemyMoves) {
-                                if (interestSquares.contains(move.getEndPosition())) {
-                                    passesThroughCheck = true;
-                                    break;
-                                }
-                            }
-                            if (!passesThroughCheck) {
-                                // The King can castle right
-                                validMoves.add(new SpecialMove(startPosition, SpecialMove.MoveType.CASTLE, side));
-                            }
+                    }
+                    if (!open) {
+                        continue;
+                    }
+
+                    // We can castle on this side if none of the three squares on the right are targeted by an enemy
+                    boolean passesThroughCheck = false;
+                    Collection<ChessMove> enemyMoves = board.getTeamMoves(enemyTeam(pieceTeam));
+                    Collection<ChessPosition> interestSquares = generateInterestSquares(startPosition, direction);
+                    for (ChessMove move : enemyMoves) {
+                        if (interestSquares.contains(move.getEndPosition())) {
+                            passesThroughCheck = true;
+                            break;
                         }
+                    }
+                    if (!passesThroughCheck) {
+                        // The King can castle right
+                        validMoves.add(new SpecialMove(startPosition, SpecialMove.MoveType.CASTLE, side));
                     }
                 }
             }
@@ -255,22 +255,6 @@ public class ChessGame {
         }
 
         return false;
-    }
-
-    /**
-     * Returns all the valid moves for a given team
-     * @param teamColor which team to get the moves for
-     * @return Collection of all the valid moves for the team
-     */
-    public Collection<ChessMove> getAllValidMoves(TeamColor teamColor) {
-        Collection<ChessPosition> teamPieces = board.getTeamPieceLocations(teamColor);
-        Collection<ChessMove> moves = new ArrayList<>();
-
-        for (ChessPosition position : teamPieces) {
-            moves.addAll(validMoves(position));
-        }
-
-        return moves;
     }
 
     /**

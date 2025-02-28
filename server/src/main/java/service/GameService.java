@@ -12,7 +12,6 @@ import java.util.Random;
 
 public class GameService {
     static MemoryGameDAO gameDB = new MemoryGameDAO();
-    static MemoryAuthDAO authDB = new MemoryAuthDAO();
 
     public static ListGamesResult listGames(ListGamesRequest listRequest) throws ServiceError {
         // Check authentication

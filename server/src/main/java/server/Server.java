@@ -3,8 +3,6 @@ package server;
 import service.ServiceError;
 import spark.*;
 
-import static server.Handlers.*;
-
 public class Server {
 
     public int run(int desiredPort) {

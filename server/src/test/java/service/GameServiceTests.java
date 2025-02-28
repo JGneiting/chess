@@ -1,7 +1,6 @@
 package service;
 
 import model.*;
-import org.eclipse.jetty.server.Authentication;
 import org.junit.jupiter.api.*;
 
 import static org.eclipse.jetty.util.LazyList.size;
@@ -68,9 +67,7 @@ public class GameServiceTests {
     public void joinGame() {
         // A game should exist already, join it
         JoinGameRequest joinWhite = new JoinGameRequest(userAuthToken, "WHITE", gameID);
-        assertDoesNotThrow(() -> {
-            GameService.joinGame(joinWhite);
-        });
+        assertDoesNotThrow(() -> GameService.joinGame(joinWhite));
         // Verify that data was changed
         ListGamesRequest listRequest = new ListGamesRequest(userAuthToken);
         ListGamesResult listResult = GameService.listGames(listRequest);

@@ -7,7 +7,7 @@ import java.util.Collection;
 
 public class MemoryUserDAO implements UserDAO{
 
-    static Collection<UserData> users = new ArrayList<UserData>();
+    static Collection<UserData> users = new ArrayList<>();
 
     @Override
     public UserData getUser(String username) {
