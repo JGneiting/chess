@@ -86,44 +86,47 @@ public class ChessGame {
      */
     private void checkCastling(ChessPosition startPosition, ChessPiece piece, TeamColor pieceTeam, Collection<ChessMove> validMoves) {
         // If we are a king, check if we can castle
-        if (piece.getPieceType() == ChessPiece.PieceType.KING) {
-            SpecialMove.MoveSide[] sides = {
-                    SpecialMove.MoveSide.LEFT,
-                    SpecialMove.MoveSide.RIGHT
-            };
-            for (SpecialMove.MoveSide side : sides) {
-                int direction = side == SpecialMove.MoveSide.LEFT ? -1 : 1;
-                ChessPiece rook = board.getPiece(new ChessPosition(startPosition.getRow(), side == SpecialMove.MoveSide.LEFT ? 1 : 8));
-                // To castle right, the king must not have moved, as well as the rook in the same row in that direction
-                if (piece.hasNotMoved() && rook != null && rook.hasNotMoved()) {
-                    // Two squares right must be empty
-                    boolean open = true;
-                    for (int i = 1; i <= (side == SpecialMove.MoveSide.LEFT ? 3 : 2); i++) {
-                        if (board.getPiece(new ChessPosition(startPosition.getRow(), startPosition.getColumn() + (direction * i))) != null) {
-                            open = false;
-                        }
-                    }
-                    if (!open) {
-                        continue;
-                    }
+        if (piece.getPieceType() != ChessPiece.PieceType.KING) {
+            return;
+        }
 
-                    // We can castle on this side if none of the three squares on the right are targeted by an enemy
-                    boolean passesThroughCheck = false;
-                    Collection<ChessMove> enemyMoves = board.getTeamMoves(enemyTeam(pieceTeam));
-                    Collection<ChessPosition> interestSquares = generateInterestSquares(startPosition, direction);
-                    for (ChessMove move : enemyMoves) {
-                        if (interestSquares.contains(move.getEndPosition())) {
-                            passesThroughCheck = true;
-                            break;
-                        }
+        SpecialMove.MoveSide[] sides = {
+                SpecialMove.MoveSide.LEFT,
+                SpecialMove.MoveSide.RIGHT
+        };
+        for (SpecialMove.MoveSide side : sides) {
+            int direction = side == SpecialMove.MoveSide.LEFT ? -1 : 1;
+            ChessPiece rook = board.getPiece(new ChessPosition(startPosition.getRow(), side == SpecialMove.MoveSide.LEFT ? 1 : 8));
+            // To castle right, the king must not have moved, as well as the rook in the same row in that direction
+            if (piece.hasNotMoved() && rook != null && rook.hasNotMoved()) {
+                // Two squares right must be empty
+                boolean open = true;
+                for (int i = 1; i <= (side == SpecialMove.MoveSide.LEFT ? 3 : 2); i++) {
+                    if (board.getPiece(new ChessPosition(startPosition.getRow(), startPosition.getColumn() + (direction * i))) != null) {
+                        open = false;
                     }
-                    if (!passesThroughCheck) {
-                        // The King can castle right
-                        validMoves.add(new SpecialMove(startPosition, SpecialMove.MoveType.CASTLE, side));
+                }
+                if (!open) {
+                    continue;
+                }
+
+                // We can castle on this side if none of the three squares on the right are targeted by an enemy
+                boolean passesThroughCheck = false;
+                Collection<ChessMove> enemyMoves = board.getTeamMoves(enemyTeam(pieceTeam));
+                Collection<ChessPosition> interestSquares = generateInterestSquares(startPosition, direction);
+                for (ChessMove move : enemyMoves) {
+                    if (interestSquares.contains(move.getEndPosition())) {
+                        passesThroughCheck = true;
+                        break;
                     }
+                }
+                if (!passesThroughCheck) {
+                    // The King can castle right
+                    validMoves.add(new SpecialMove(startPosition, SpecialMove.MoveType.CASTLE, side));
                 }
             }
         }
+
     }
 
     /**
