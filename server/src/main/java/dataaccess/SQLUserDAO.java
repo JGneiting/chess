@@ -30,7 +30,7 @@ public class SQLUserDAO implements UserDAO{
                 }
             }
         } catch (SQLException ex) {
-            throw new DataAccessException("Could not create auth table");
+            throw new DataAccessException(String.format("Unable to create database: %s", ex.getMessage()));
         }
     }
 
@@ -48,7 +48,7 @@ public class SQLUserDAO implements UserDAO{
                 }
             }
         } catch (SQLException ex) {
-            throw new DataAccessException("Could not get user");
+            throw new DataAccessException(String.format("Unable to get user: %s", ex.getMessage()));
         }
     }
 
@@ -63,7 +63,7 @@ public class SQLUserDAO implements UserDAO{
                 ps.executeUpdate();
             }
         } catch (SQLException ex) {
-            throw new DataAccessException("Could not create user");
+            throw new DataAccessException(String.format("Unable to create user: %s", ex.getMessage()));
         }
     }
 
@@ -75,7 +75,7 @@ public class SQLUserDAO implements UserDAO{
                 ps.executeUpdate();
             }
         } catch (SQLException ex) {
-            throw new DataAccessException("Could not clear user table");
+            throw new DataAccessException(String.format("Unable to clear: %s", ex.getMessage()));
         }
     }
 }

@@ -27,7 +27,7 @@ public class SQLAuthDAO implements AuthDAO{
                 }
             }
         } catch (SQLException ex) {
-            throw new DataAccessException("Could not create auth table");
+            throw new DataAccessException(String.format("Unable to create table: %s", ex.getMessage()));
         }
     }
 
@@ -45,7 +45,7 @@ public class SQLAuthDAO implements AuthDAO{
                 }
             }
         } catch (SQLException ex) {
-            throw new DataAccessException("Could not get auth");
+            throw new DataAccessException(String.format("Unable to read auth: %s", ex.getMessage()));
         }
     }
 
@@ -59,7 +59,7 @@ public class SQLAuthDAO implements AuthDAO{
                 ps.executeUpdate();
             }
         } catch (SQLException ex) {
-            throw new DataAccessException("Could not create auth");
+            throw new DataAccessException(String.format("Unable to create auth: %s", ex.getMessage()));
         }
     }
 
@@ -72,7 +72,7 @@ public class SQLAuthDAO implements AuthDAO{
                 ps.executeUpdate();
             }
         } catch (SQLException ex) {
-            throw new DataAccessException("Could not delete auth");
+            throw new DataAccessException(String.format("Unable to delete auth: %s", ex.getMessage()));
         }
     }
 
@@ -84,7 +84,7 @@ public class SQLAuthDAO implements AuthDAO{
                 ps.executeUpdate();
             }
         } catch (SQLException ex) {
-            throw new DataAccessException("Could not clear auth table");
+            throw new DataAccessException(String.format("Unable to clear auth: %s", ex.getMessage()));
         }
     }
 }
