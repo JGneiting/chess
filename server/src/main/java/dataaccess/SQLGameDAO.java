@@ -11,6 +11,7 @@ import java.util.Collection;
 import com.google.gson.Gson;
 import java.util.List;
 
+import static dataaccess.DatabaseManager.createDatabase;
 import static dataaccess.DatabaseManager.getConnection;
 
 public class SQLGameDAO implements GameDAO{
@@ -28,6 +29,19 @@ public class SQLGameDAO implements GameDAO{
             """
     };
 
+    public SQLGameDAO() throws DataAccessException {
+        createDatabase();
+        try (var conn = getConnection()) {
+            for (var statement : createStatement) {
+                try (var preparedStatement = conn.prepareStatement(statement)) {
+                    preparedStatement.executeUpdate();
+                }
+            }
+        } catch (SQLException ex) {
+            throw new DataAccessException(String.format("Unable to create table: %s", ex.getMessage()));
+        }
+    }
+
     private GameData readGame(ResultSet rs) throws SQLException {
         String json = rs.getString("json");
         String name = rs.getString("name");
@@ -42,7 +56,7 @@ public class SQLGameDAO implements GameDAO{
     public Collection<GameData> listGames() throws DataAccessException {
         var result = new ArrayList<GameData>();
         try (var conn = DatabaseManager.getConnection()) {
-            var statement = "SELECT json, blackUsername, whiteUsername, gameId FROM game";
+            var statement = "SELECT * FROM game";
             try (var ps = conn.prepareStatement(statement)) {
                 try (var rs = ps.executeQuery()) {
                     while (rs.next()) {
@@ -59,7 +73,7 @@ public class SQLGameDAO implements GameDAO{
     @Override
     public void createGame(GameData game) throws DataAccessException{
         try (var conn = getConnection()) {
-            var statement = "INSERT INTO user (json, name, blackUsername, whiteUsername, gameId) VALUES (?, ?, ?, ?, ?)";
+            var statement = "INSERT INTO game (json, name, blackUsername, whiteUsername, gameId) VALUES (?, ?, ?, ?, ?)";
             try (var ps = conn.prepareStatement(statement)) {
                 var json = new Gson().toJson(game.game());
                 ps.setString(1, json);
@@ -77,7 +91,7 @@ public class SQLGameDAO implements GameDAO{
     @Override
     public GameData getGame(int gameID) throws DataAccessException{
         try (var conn = getConnection()) {
-            var statement = "SELECT * FROM user where gameId=?";
+            var statement = "SELECT * FROM game where gameId=?";
             try (var ps = conn.prepareStatement(statement)) {
                 ps.setInt(1, gameID);
                 try (var rs = ps.executeQuery()) {

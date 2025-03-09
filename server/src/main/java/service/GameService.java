@@ -4,6 +4,7 @@ import chess.ChessGame;
 import dataaccess.DataAccessException;
 import dataaccess.MemoryAuthDAO;
 import dataaccess.MemoryGameDAO;
+import dataaccess.SQLGameDAO;
 import model.*;
 
 import java.util.ArrayList;
@@ -11,19 +12,25 @@ import java.util.Collection;
 import java.util.Random;
 
 public class GameService {
-    static MemoryGameDAO gameDB = new MemoryGameDAO();
+    private final SQLGameDAO gameDB;
+    private final UserService userService;
 
-    public static ListGamesResult listGames(ListGamesRequest listRequest) throws ServiceError {
+    public GameService() throws DataAccessException {
+        userService = new UserService();
+        gameDB = new SQLGameDAO();
+    }
+
+    public ListGamesResult listGames(ListGamesRequest listRequest) throws ServiceError, DataAccessException {
         // Check authentication
-        UserService.checkAuth(listRequest.authToken());
+        userService.checkAuth(listRequest.authToken());
 
         // Get games
         return new ListGamesResult(gameDB.listGames().toArray(new GameData[0]));
     }
 
-    public static NewGameResult newGame(NewGameRequest newGameRequest) throws ServiceError {
+    public NewGameResult newGame(NewGameRequest newGameRequest) throws ServiceError, DataAccessException {
         // Check authentication
-        UserService.checkAuth(newGameRequest.authToken());
+        userService.checkAuth(newGameRequest.authToken());
 
         // Check if a valid game name was submitted
         if (newGameRequest.gameName().isEmpty()) {
@@ -54,9 +61,9 @@ public class GameService {
         return new NewGameResult(gameID);
     }
 
-    public static void joinGame(JoinGameRequest joinRequest) throws ServiceError {
+    public void joinGame(JoinGameRequest joinRequest) throws ServiceError, DataAccessException {
         // Check authentication
-        AuthData auth = UserService.checkAuth(joinRequest.authToken());
+        AuthData auth = userService.checkAuth(joinRequest.authToken());
 
         // Check to make sure that the request is valid
         if (joinRequest.playerColor() == null || !(joinRequest.playerColor().equals("WHITE") || joinRequest.playerColor().equals("BLACK"))) {

@@ -1,5 +1,6 @@
 package server;
 
+import dataaccess.DataAccessException;
 import service.ServiceError;
 import spark.*;
 
@@ -22,6 +23,13 @@ public class Server {
         // Handle Service error exception
         Spark.exception(ServiceError.class, (exception, request, response) -> {
             response.status(exception.getCode());
+            response.type("application/json");
+            response.body("{\"message\": \"" + exception.getMessage() + "\"}");
+        });
+
+        // Handle DataAccess error exception
+        Spark.exception(DataAccessException.class, (exception, request, response) -> {
+            response.status(500);
             response.type("application/json");
             response.body("{\"message\": \"" + exception.getMessage() + "\"}");
         });

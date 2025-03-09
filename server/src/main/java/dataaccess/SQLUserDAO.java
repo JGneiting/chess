@@ -55,7 +55,7 @@ public class SQLUserDAO implements UserDAO{
     @Override
     public void createUser(UserData user) throws DataAccessException {
         try (var conn = getConnection()) {
-            var statement = "INSERT INTO auth (username, email, password) VALUES (?, ?, ?)";
+            var statement = "INSERT INTO user (username, email, password) VALUES (?, ?, ?)";
             try (var ps = conn.prepareStatement(statement)) {
                 ps.setString(1, user.username());
                 ps.setString(2, user.email());

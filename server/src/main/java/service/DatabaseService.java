@@ -1,15 +1,39 @@
 package service;
 
-import dataaccess.MemoryAuthDAO;
-import dataaccess.MemoryGameDAO;
-import dataaccess.MemoryUserDAO;
+import dataaccess.*;
 
 public class DatabaseService {
-    static MemoryUserDAO userDB = new MemoryUserDAO();
-    static MemoryGameDAO gameDB = new MemoryGameDAO();
-    static MemoryAuthDAO authDB = new MemoryAuthDAO();
+    static SQLUserDAO userDB;
 
-    public static void clearDatabase() {
+    static {
+        try {
+            userDB = new SQLUserDAO();
+        } catch (DataAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    static SQLGameDAO gameDB;
+
+    static {
+        try {
+            gameDB = new SQLGameDAO();
+        } catch (DataAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    static SQLAuthDAO authDB;
+
+    static {
+        try {
+            authDB = new SQLAuthDAO();
+        } catch (DataAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void clearDatabase() throws DataAccessException {
         userDB.clear();
         gameDB.clear();
         authDB.clear();

@@ -1,21 +1,25 @@
 package service;
 
-import dataaccess.DataAccessException;
-import dataaccess.MemoryAuthDAO;
-import dataaccess.MemoryUserDAO;
+import dataaccess.*;
 import model.*;
+import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.UUID;
 
 public class UserService {
-    static MemoryUserDAO userDB = new MemoryUserDAO();
-    static MemoryAuthDAO authDB = new MemoryAuthDAO();
+    private final SQLUserDAO userDB;
+    private final SQLAuthDAO authDB;
+
+    public UserService() throws DataAccessException {
+        userDB = new SQLUserDAO();
+        authDB = new SQLAuthDAO();
+    }
 
     private static String generateAuthToken() {
         return UUID.randomUUID().toString();
     }
 
-    public static AuthData checkAuth(String authToken) throws ServiceError {
+    public AuthData checkAuth(String authToken) throws ServiceError, DataAccessException {
         AuthData locatedAuth = authDB.getAuth(authToken);
         if (locatedAuth == null) {
             throw new ServiceError("Error: unauthorized", 401);
@@ -23,7 +27,7 @@ public class UserService {
         return locatedAuth;
     }
 
-    public static RegisterResult register(RegisterRequest registerRequest) throws ServiceError {
+    public RegisterResult register(RegisterRequest registerRequest) throws ServiceError, DataAccessException {
         // Validate that all required information is in the register request
         if (registerRequest.username() == null || registerRequest.password() == null || registerRequest.email() == null ||
                 registerRequest.username().isEmpty() || registerRequest.password().isEmpty() || registerRequest.email().isEmpty()) {
@@ -40,7 +44,8 @@ public class UserService {
         }
 
         // Create a new user and auth data
-        UserData user = new UserData(registerRequest.username(), registerRequest.password(), registerRequest.email());
+        String hashedPassword = BCrypt.hashpw(registerRequest.password(), BCrypt.gensalt());
+        UserData user = new UserData(registerRequest.username(), hashedPassword, registerRequest.email());
         AuthData auth = new AuthData(generateAuthToken(), user.username());
         userDB.createUser(user);
         authDB.createAuth(auth);
@@ -49,12 +54,12 @@ public class UserService {
         return new RegisterResult(user.username(), auth.authToken());
     }
 
-    public static LoginResult login(LoginRequest loginRequest) throws ServiceError {
+    public LoginResult login(LoginRequest loginRequest) throws ServiceError, DataAccessException {
         // Find user
         UserData user = userDB.getUser(loginRequest.username());
 
         // Check if the user submitted the correct password
-        if (user == null || !user.password().equals(loginRequest.password())) {
+        if (user == null || !BCrypt.checkpw(loginRequest.password(), user.password())) {
             throw new ServiceError("Error: unauthorized", 401);
         }
 
@@ -66,14 +71,10 @@ public class UserService {
         return new LoginResult(user.username(), auth.authToken());
     }
 
-    public static void logout(LogoutRequest logoutRequest) throws ServiceError{
+    public void logout(LogoutRequest logoutRequest) throws ServiceError, DataAccessException{
         // Check if the user has auth data in the database
         AuthData auth = checkAuth(logoutRequest.authToken());
 
-        try {
-            authDB.deleteAuth(auth);
-        } catch (DataAccessException e) {
-            throw new ServiceError("Error: could not delete auth", 500);
-        }
+        authDB.deleteAuth(auth);
     }
 }
