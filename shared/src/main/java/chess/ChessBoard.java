@@ -40,6 +40,10 @@ public class ChessBoard {
         return null;
     }
 
+    public Set<Map.Entry<ChessPosition, ChessPiece>> getEntries() {
+        return board.entrySet();
+    }
+
     /**
      * Sets the board to the default starting board
      * (How the game of chess normally starts)

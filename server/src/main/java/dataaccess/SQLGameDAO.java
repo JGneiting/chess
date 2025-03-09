@@ -1,6 +1,7 @@
 package dataaccess;
 
 import chess.ChessGame;
+import com.google.gson.GsonBuilder;
 import model.AuthData;
 import model.GameData;
 
@@ -75,7 +76,10 @@ public class SQLGameDAO implements GameDAO{
         try (var conn = getConnection()) {
             var statement = "INSERT INTO game (json, name, blackUsername, whiteUsername, gameId) VALUES (?, ?, ?, ?, ?)";
             try (var ps = conn.prepareStatement(statement)) {
-                var json = new Gson().toJson(game.game());
+                GsonBuilder gsonBuilder = new GsonBuilder();
+                gsonBuilder.registerTypeAdapter(ChessGame.class, new ChessGame.ChessGameAdapter());
+                Gson gson = gsonBuilder.create();
+                var json = gson.toJson(game.game());
                 ps.setString(1, json);
                 ps.setString(2, game.gameName());
                 ps.setString(3, game.blackUsername());

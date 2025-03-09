@@ -1,7 +1,14 @@
 package chess;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
+
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 
 /**
  * For a class that can manage a chess game, making moves on a board
@@ -243,6 +250,7 @@ public class ChessGame {
      * Determines if the given team is in check
      *
      * @param teamColor which team to check for check
+     *
      * @return True if the specified team is in check
      */
     public boolean isInCheck(TeamColor teamColor) {
@@ -326,5 +334,23 @@ public class ChessGame {
      */
     public ChessBoard getBoard() {
         return board;
+    }
+
+    // Custom serializer for HashMap with ChessPosition as the key
+    public static class ChessGameAdapter implements JsonSerializer<ChessGame> {
+        @Override
+        public JsonElement serialize(ChessGame src, Type typeOfSrc, JsonSerializationContext context) {
+            JsonObject jsonObject = new JsonObject();
+            JsonObject boardObject = new JsonObject();
+
+            for (HashMap.Entry<ChessPosition, ChessPiece> entry : src.getBoard().getEntries()) {
+                // Serialize ChessPosition (key) to string or object
+                JsonElement positionJson = context.serialize(entry.getKey()); // Custom adapter will handle this
+                JsonElement valueJson = context.serialize(entry.getValue()); // Serialize the value as usual
+                boardObject.add(positionJson.toString(), valueJson);  // Use the serialized position as the key in JSON
+            }
+            jsonObject.add("board", boardObject);
+            return jsonObject;
+        }
     }
 }
