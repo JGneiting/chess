@@ -17,7 +17,7 @@ import static dataaccess.DatabaseManager.getConnection;
 
 public class SQLGameDAO extends SQLDAO implements GameDAO {
 
-    private final String[] createStatement =  {
+    private static final String createStatement =
             """
             CREATE TABLE IF NOT EXISTS game (
                 `json` TEXT DEFAULT NULL,
@@ -27,11 +27,10 @@ public class SQLGameDAO extends SQLDAO implements GameDAO {
                 `gameId` int NOT NULL,
                 PRIMARY KEY (`gameId`)
             )
-            """
-    };
+            """;
 
     public SQLGameDAO() throws DataAccessException {
-        super();
+        super(createStatement);
     }
 
     private GameData readGame(ResultSet rs) throws SQLException {

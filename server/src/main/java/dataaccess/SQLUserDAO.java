@@ -10,7 +10,7 @@ import static dataaccess.DatabaseManager.getConnection;
 
 public class SQLUserDAO extends SQLDAO implements UserDAO{
 
-    private final String[] createStatement =  {
+    private final static String createStatement =
             """
             CREATE TABLE IF NOT EXISTS user (
                 `username` varchar(32) NOT NULL,
@@ -18,11 +18,10 @@ public class SQLUserDAO extends SQLDAO implements UserDAO{
                 `password` varchar(256) NOT NULL,
                 PRIMARY KEY (`username`)
             )
-            """
-    };
+            """;
 
     public SQLUserDAO() throws DataAccessException {
-        super();
+        super(createStatement);
     }
 
     @Override
