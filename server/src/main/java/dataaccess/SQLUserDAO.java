@@ -8,7 +8,7 @@ import java.sql.SQLException;
 import static dataaccess.DatabaseManager.createDatabase;
 import static dataaccess.DatabaseManager.getConnection;
 
-public class SQLUserDAO implements UserDAO{
+public class SQLUserDAO extends SQLDAO implements UserDAO{
 
     private final String[] createStatement =  {
             """
@@ -22,16 +22,7 @@ public class SQLUserDAO implements UserDAO{
     };
 
     public SQLUserDAO() throws DataAccessException {
-        createDatabase();
-        try (var conn = getConnection()) {
-            for (var statement : createStatement) {
-                try (var preparedStatement = conn.prepareStatement(statement)) {
-                    preparedStatement.executeUpdate();
-                }
-            }
-        } catch (SQLException ex) {
-            throw new DataAccessException(String.format("Unable to create database: %s", ex.getMessage()));
-        }
+        super();
     }
 
     @Override

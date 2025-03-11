@@ -6,7 +6,7 @@ import java.sql.SQLException;
 
 import static dataaccess.DatabaseManager.*;
 
-public class SQLAuthDAO implements AuthDAO{
+public class SQLAuthDAO extends SQLDAO implements AuthDAO{
 
     private final String[] createStatement =  {
             """
@@ -19,16 +19,7 @@ public class SQLAuthDAO implements AuthDAO{
     };
 
     public SQLAuthDAO() throws DataAccessException {
-        createDatabase();
-        try (var conn = getConnection()) {
-            for (var statement : createStatement) {
-                try (var preparedStatement = conn.prepareStatement(statement)) {
-                    preparedStatement.executeUpdate();
-                }
-            }
-        } catch (SQLException ex) {
-            throw new DataAccessException(String.format("Unable to create table: %s", ex.getMessage()));
-        }
+        super();
     }
 
     @Override

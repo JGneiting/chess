@@ -15,7 +15,7 @@ import java.util.List;
 import static dataaccess.DatabaseManager.createDatabase;
 import static dataaccess.DatabaseManager.getConnection;
 
-public class SQLGameDAO implements GameDAO{
+public class SQLGameDAO extends SQLDAO implements GameDAO {
 
     private final String[] createStatement =  {
             """
@@ -31,16 +31,7 @@ public class SQLGameDAO implements GameDAO{
     };
 
     public SQLGameDAO() throws DataAccessException {
-        createDatabase();
-        try (var conn = getConnection()) {
-            for (var statement : createStatement) {
-                try (var preparedStatement = conn.prepareStatement(statement)) {
-                    preparedStatement.executeUpdate();
-                }
-            }
-        } catch (SQLException ex) {
-            throw new DataAccessException(String.format("Unable to create table: %s", ex.getMessage()));
-        }
+        super();
     }
 
     private GameData readGame(ResultSet rs) throws SQLException {
