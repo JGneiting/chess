@@ -2,7 +2,6 @@ package dataaccess;
 
 import chess.ChessGame;
 import com.google.gson.GsonBuilder;
-import model.AuthData;
 import model.GameData;
 
 import java.sql.ResultSet;
@@ -10,14 +9,12 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import com.google.gson.Gson;
-import java.util.List;
 
-import static dataaccess.DatabaseManager.createDatabase;
 import static dataaccess.DatabaseManager.getConnection;
 
 public class SQLGameDAO extends SQLDAO implements GameDAO {
 
-    private static final String createStatement =
+    private static final String CREATE_STATEMENT =
             """
             CREATE TABLE IF NOT EXISTS game (
                 `json` TEXT DEFAULT NULL,
@@ -30,7 +27,7 @@ public class SQLGameDAO extends SQLDAO implements GameDAO {
             """;
 
     public SQLGameDAO() throws DataAccessException {
-        super(createStatement);
+        super(CREATE_STATEMENT);
     }
 
     private GameData readGame(ResultSet rs) throws SQLException {

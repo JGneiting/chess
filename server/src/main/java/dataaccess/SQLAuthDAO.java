@@ -8,7 +8,7 @@ import static dataaccess.DatabaseManager.*;
 
 public class SQLAuthDAO extends SQLDAO implements AuthDAO{
 
-    private final static String createStatement =
+    private final static String CREATE_STATEMENT =
             """
             CREATE TABLE IF NOT EXISTS auth (
                 `authToken` varchar(128) NOT NULL,
@@ -18,7 +18,7 @@ public class SQLAuthDAO extends SQLDAO implements AuthDAO{
             """;
 
     public SQLAuthDAO() throws DataAccessException {
-        super(createStatement);
+        super(CREATE_STATEMENT);
     }
 
     @Override

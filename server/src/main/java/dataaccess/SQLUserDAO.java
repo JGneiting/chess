@@ -1,16 +1,14 @@
 package dataaccess;
 
-import model.AuthData;
 import model.UserData;
 
 import java.sql.SQLException;
 
-import static dataaccess.DatabaseManager.createDatabase;
 import static dataaccess.DatabaseManager.getConnection;
 
 public class SQLUserDAO extends SQLDAO implements UserDAO{
 
-    private final static String createStatement =
+    private final static String CREATE_STATEMENT =
             """
             CREATE TABLE IF NOT EXISTS user (
                 `username` varchar(32) NOT NULL,
@@ -21,7 +19,7 @@ public class SQLUserDAO extends SQLDAO implements UserDAO{
             """;
 
     public SQLUserDAO() throws DataAccessException {
-        super(createStatement);
+        super(CREATE_STATEMENT);
     }
 
     @Override
