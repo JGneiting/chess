@@ -1,14 +1,12 @@
 package chess;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonSerializationContext;
-import com.google.gson.JsonSerializer;
+import com.google.gson.*;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * For a class that can manage a chess game, making moves on a board
@@ -49,6 +47,15 @@ public class ChessGame {
     public enum TeamColor {
         WHITE,
         BLACK
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        ChessGame that = (ChessGame) o;
+        return currentTurn == that.currentTurn && board.equals(that.board);
     }
 
     /**
@@ -341,16 +348,43 @@ public class ChessGame {
         @Override
         public JsonElement serialize(ChessGame src, Type typeOfSrc, JsonSerializationContext context) {
             JsonObject jsonObject = new JsonObject();
-            JsonObject boardObject = new JsonObject();
+            JsonArray boardArray = new JsonArray();
 
-            for (HashMap.Entry<ChessPosition, ChessPiece> entry : src.getBoard().getEntries()) {
-                // Serialize ChessPosition (key) to string or object
-                JsonElement positionJson = context.serialize(entry.getKey()); // Custom adapter will handle this
-                JsonElement valueJson = context.serialize(entry.getValue()); // Serialize the value as usual
-                boardObject.add(positionJson.toString(), valueJson);  // Use the serialized position as the key in JSON
+            for (Map.Entry<ChessPosition, ChessPiece> entry : src.getBoard().getEntries()) {
+                JsonObject boardEntry = new JsonObject();
+                boardEntry.add("position", context.serialize(entry.getKey()));
+                boardEntry.add("piece", context.serialize(entry.getValue()));
+                boardArray.add(boardEntry);
             }
-            jsonObject.add("board", boardObject);
+            jsonObject.add("board", boardArray);
+            jsonObject.add("currentTurn", context.serialize(src.getTeamTurn()));
             return jsonObject;
+        }
+    }
+
+    // Custom deserializer for ChessGame
+    public static class ChessGameDeserializer implements JsonDeserializer<ChessGame> {
+        @Override
+        public ChessGame deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            JsonObject jsonObject = json.getAsJsonObject();
+            ChessGame game = new ChessGame();
+
+            // Deserialize the current turn
+            ChessGame.TeamColor currentTurn = context.deserialize(jsonObject.get("currentTurn"), ChessGame.TeamColor.class);
+            game.setTeamTurn(currentTurn);
+
+            // Deserialize the board
+            JsonArray boardArray = jsonObject.getAsJsonArray("board");
+            ChessBoard board = new ChessBoard();
+            for (JsonElement element : boardArray) {
+                JsonObject boardEntry = element.getAsJsonObject();
+                ChessPosition position = context.deserialize(boardEntry.get("position"), ChessPosition.class);
+                ChessPiece piece = context.deserialize(boardEntry.get("piece"), ChessPiece.class);
+                board.addPiece(position, piece);
+            }
+            game.setBoard(board);
+
+            return game;
         }
     }
 }

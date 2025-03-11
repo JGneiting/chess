@@ -49,7 +49,12 @@ public class SQLGameDAO implements GameDAO{
         String white = rs.getString("whiteUsername");
         String black = rs.getString("blackUsername");
         int gameId = rs.getInt("gameId");
-        ChessGame game = new Gson().fromJson(json, ChessGame.class);
+
+        GsonBuilder gsonBuilder = new GsonBuilder();
+        gsonBuilder.registerTypeAdapter(ChessGame.class, new ChessGame.ChessGameAdapter());
+        gsonBuilder.registerTypeAdapter(ChessGame.class, new ChessGame.ChessGameDeserializer());
+        Gson gson = gsonBuilder.create();
+        ChessGame game = gson.fromJson(json, ChessGame.class);
         return new GameData(game, name, black, white, gameId);
     }
 
@@ -115,12 +120,18 @@ public class SQLGameDAO implements GameDAO{
         try (var conn = getConnection()) {
             var statement = "UPDATE game SET json=?, whiteUsername=?, blackUsername=? WHERE gameId=?";
             try (var ps = conn.prepareStatement(statement)) {
-                var json = new Gson().toJson(game.game());
+                GsonBuilder gsonBuilder = new GsonBuilder();
+                gsonBuilder.registerTypeAdapter(ChessGame.class, new ChessGame.ChessGameAdapter());
+                Gson gson = gsonBuilder.create();
+                var json = gson.toJson(game.game());
                 ps.setString(1, json);
                 ps.setString(2, game.whiteUsername());
                 ps.setString(3, game.blackUsername());
                 ps.setInt(4, game.gameID());
-                ps.executeUpdate();
+                int rows = ps.executeUpdate();
+                if (rows == 0) {
+                    throw new DataAccessException("Game does not exist");
+                }
             }
         } catch (SQLException ex) {
             throw new DataAccessException(String.format("Unable to update game: %s", ex.getMessage()));

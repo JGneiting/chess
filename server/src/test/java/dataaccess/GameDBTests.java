@@ -1,6 +1,8 @@
 package dataaccess;
 
 import chess.ChessGame;
+import chess.ChessMove;
+import chess.ChessPosition;
 import model.GameData;
 import org.junit.jupiter.api.*;
 
@@ -11,7 +13,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class GameDBTests {
-    private ChessGame game;
 
     @BeforeAll
     public static void setup() throws DataAccessException {
@@ -25,7 +26,7 @@ public class GameDBTests {
     @Order(1)
     public void createGame(){
         // Create a game
-        game = new ChessGame();
+        ChessGame game = new ChessGame();
         GameData gameData = new GameData(game, "Test Game", null, null, 1111);
 
         assertDoesNotThrow(() -> {
@@ -40,7 +41,7 @@ public class GameDBTests {
     @Order(2)
     public void createDuplicateGame() {
         // Create a game
-        game = new ChessGame();
+        ChessGame game = new ChessGame();
         GameData gameData = new GameData(game, "Cool new game", null, null, 1111);
 
         assertThrows(DataAccessException.class, () -> {
@@ -93,19 +94,49 @@ public class GameDBTests {
     @Test
     @Order(6)
     public void updateGame() {
+        assertDoesNotThrow(() -> {
+            ChessGame game = new ChessGame();
+            // Get the game from the database;
+            SQLGameDAO gameDB = new SQLGameDAO();
+            ChessMove move = new ChessMove(new ChessPosition(1, 2), new ChessPosition(3, 3), null);
+            game.makeMove(move);
 
+            // Update game in the database
+            gameDB.updateGame(new GameData(game, "Test Game", "tester12", null, 1111));
+        });
     }
 
     @Test
     @Order(7)
     public void updateNonExistentGame() {
+        assertThrows(DataAccessException.class, () -> {
+            ChessGame game = new ChessGame();
+            // Get the game from the database;
+            SQLGameDAO gameDB = new SQLGameDAO();
 
+            // Update game in the database
+            gameDB.updateGame(new GameData(game, "Test Game", "tester12", null, 9999));
+        });
     }
 
     @Test
     @Order(8)
-    public void updateMultipleGames() {
+    public void updatePersistance() {
+        assertDoesNotThrow(() -> {
+            ChessGame game = new ChessGame();
+            ChessMove move = new ChessMove(new ChessPosition(1, 2), new ChessPosition(3, 3), null);
+            game.makeMove(move);
+            // Get the game from the database;
+            SQLGameDAO gameDB = new SQLGameDAO();
+            GameData gameData = gameDB.getGame(1111);
 
+            assertNotNull(gameData, "Game not found in database");
+            assertEquals(game, gameData.game(), "Game not updated in database");
+
+            // Make sure that game 2222 was not updated
+            GameData gameData2 = gameDB.getGame(2222);
+            assertEquals(new ChessGame(), gameData2.game(), "Game 2222 was updated");
+        });
     }
 
     @Test
