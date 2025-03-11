@@ -52,7 +52,7 @@ public class SQLAuthDAO implements AuthDAO{
     @Override
     public void createAuth(AuthData auth) throws DataAccessException{
         try (var conn = getConnection()) {
-            var statement = "INSERT INTO auth (authToken, username) VALUES (?, ?)";
+            String statement = "INSERT INTO auth (authToken, username) VALUES (?, ?)";
             try (var ps = conn.prepareStatement(statement)) {
                 ps.setString(1, auth.authToken());
                 ps.setString(2, auth.username());
@@ -69,7 +69,9 @@ public class SQLAuthDAO implements AuthDAO{
             var statement = "DELETE FROM auth where authToken=?";
             try (var ps = conn.prepareStatement(statement)) {
                 ps.setString(1, auth.authToken());
-                ps.executeUpdate();
+                if (ps.executeUpdate() == 0) {
+                    throw new DataAccessException("Auth does not exist");
+                }
             }
         } catch (SQLException ex) {
             throw new DataAccessException(String.format("Unable to delete auth: %s", ex.getMessage()));
