@@ -62,6 +62,7 @@ public class ServerFacadeTests {
     @Test
     public void registerDuplicateUser() {
         RegisterRequest request = new RegisterRequest("tester12", "qwerty", "test@test.com");
+        createAuthUser();
 
         // try to register the same user again
         ResponseException error = assertThrows(ResponseException.class, () -> facade.register(request));
@@ -212,7 +213,7 @@ public class ServerFacadeTests {
         assertDoesNotThrow(() -> facade.joinGame(joinWhite));
 
         // Attempt to join white team again
-        ServiceError takenError = assertThrows(ServiceError.class, () -> facade.joinGame(joinWhite));
+        ResponseException takenError = assertThrows(ResponseException.class, () -> facade.joinGame(joinWhite));
         assertEquals(403, takenError.getCode());
         assertEquals("Error: already taken", takenError.getMessage());
     }

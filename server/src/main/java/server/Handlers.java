@@ -1,6 +1,8 @@
 package server;
 
+import chess.ChessGame;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import dataaccess.DataAccessException;
 import model.*;
 import service.DatabaseService;
@@ -9,7 +11,14 @@ import service.UserService;
 import spark.*;
 
 public class Handlers {
-    private static final Gson SERIALIZER = new Gson();
+    private static Gson SERIALIZER;
+
+    static {
+        GsonBuilder gsonBuilder = new GsonBuilder();
+        gsonBuilder.registerTypeAdapter(ChessGame.class, new ChessGame.ChessGameAdapter());
+        gsonBuilder.registerTypeAdapter(ChessGame.class, new ChessGame.ChessGameDeserializer());
+        SERIALIZER = gsonBuilder.create();
+    }
 
     public static String clearApplication(Request request, Response response) throws DataAccessException {
         DatabaseService.clearDatabase();
