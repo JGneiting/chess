@@ -13,6 +13,10 @@ public class ResponseException extends RuntimeException {
         this.code = code;
     }
 
+    public int getCode() {
+        return code;
+    }
+
     // json loading
     public static ResponseException fromJson(InputStream is) {
         return new Gson().fromJson(new InputStreamReader(is), ResponseException.class);
