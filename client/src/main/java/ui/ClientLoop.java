@@ -1,5 +1,10 @@
 package ui;
 
+import model.LoginRequest;
+import model.RegisterRequest;
+
+import static ui.EscapeSequences.*;
+
 public class ClientLoop {
     private enum UIState {
         LOG_OUT,
@@ -9,29 +14,38 @@ public class ClientLoop {
     }
 
     private final String noauth =
-            """
-            register <USERNAME> <PASSWORD> <EMAIL> - Register a new account
-            login <USERNAME> <PASSWORD> - Log in to an existing account
-            quit - Exit the program
-            help - List available commands
-            """;
+            String.format("""
+            %sregister <USERNAME> <PASSWORD> <EMAIL>%s - Register a new account
+            %slogin <USERNAME> <PASSWORD>%s - Log in to an existing account
+            %squit%s - Exit the program
+            %shelp%s - List available commands%s""",
+            SET_TEXT_COLOR_GREEN, SET_TEXT_COLOR_BLUE, SET_TEXT_COLOR_GREEN, SET_TEXT_COLOR_BLUE,
+            SET_TEXT_COLOR_GREEN, SET_TEXT_COLOR_BLUE, SET_TEXT_COLOR_GREEN, SET_TEXT_COLOR_BLUE,
+            RESET_TEXT_COLOR);
 
     private final String auth =
-            """
-            create <NAME> - Create a game on the server
-            list - List available games
-            join <ID> [WHITE|BLACK] - Join a game
-            observe <ID> - Observe a game
-            logout - Log out of account
-            quit - Exit the program
-            help - List available commands
-            """;
+            String.format("""
+            %screate <NAME>%s - Create a game on the server
+            %slist%s - List available games
+            %sjoin <ID> [WHITE|BLACK]%s - Join a game
+            %sobserve <ID>%s - Observe a game
+            %slogout%s - Log out of account
+            %squit%s - Exit the program
+            %shelp%s - List available commands%s""",
+            SET_TEXT_COLOR_GREEN, SET_TEXT_COLOR_BLUE, SET_TEXT_COLOR_GREEN, SET_TEXT_COLOR_BLUE,
+            SET_TEXT_COLOR_GREEN, SET_TEXT_COLOR_BLUE, SET_TEXT_COLOR_GREEN, SET_TEXT_COLOR_BLUE,
+            SET_TEXT_COLOR_GREEN, SET_TEXT_COLOR_BLUE, SET_TEXT_COLOR_GREEN, SET_TEXT_COLOR_BLUE,
+            SET_TEXT_COLOR_GREEN, SET_TEXT_COLOR_BLUE, RESET_TEXT_COLOR);
+
+    ServerFacade facade;
 
     private String[] parseCommand(String in) {
         return in.split(" ");
     }
 
-    public ClientLoop() {}
+    public ClientLoop(String serverUrl) {
+        facade = new ServerFacade(serverUrl);
+    }
 
     public void run() {
         // Listen loop
@@ -40,16 +54,20 @@ public class ClientLoop {
         while (state != UIState.QUIT) {
             displayStateString(state);
             input = System.console().readLine();
-            state = switch (state) {
-                case LOG_OUT:
-                    yield logoutOptions(input);
-                case LOG_IN:
-                    yield loginOptions(input);
-                case GAMEPLAY:
+            try {
+                state = switch (state) {
+                    case LOG_OUT:
+                        yield logoutOptions(input);
+                    case LOG_IN:
+                        yield loginOptions(input);
+                    case GAMEPLAY:
 
-                default:
-                    yield state;
-            };
+                    default:
+                        yield state;
+                };
+            } catch (Exception e) {
+                System.out.println(SET_TEXT_COLOR_RED + e.getMessage() + RESET_TEXT_COLOR);
+            }
         }
     }
 
@@ -72,12 +90,38 @@ public class ClientLoop {
         String[] command = parseCommand(in);
         return switch (command[0]) {
             case "register" :
-                yield UIState.LOG_IN;
+                // We expect exactly 4 arguments
+                if (command.length != 4) {
+                    throw new IllegalArgumentException("Invalid number of arguments. Expected 4.");
+                }
+
+                // Send the register request
+                RegisterRequest request = new RegisterRequest(command[1], command[2], command[3]);
+                facade.register(request);
+                yield UIState.LOG_OUT;
             case "login":
-                yield UIState.QUIT;
+                // We expect exactly 3 arguments
+                if (command.length != 3) {
+                    throw new IllegalArgumentException("Invalid number of arguments. Expected 3.");
+                }
+
+                // Send login request
+                LoginRequest loginRequest = new LoginRequest(command[1], command[2]);
+                facade.login(loginRequest);
+                yield UIState.LOG_IN;
             case "quit":
+                // Expect exactly one argument
+                if (command.length != 1) {
+                    throw new IllegalArgumentException("Invalid number of arguments. Expected 1.");
+                }
+
                 yield UIState.QUIT;
             case "help":
+                // Expect exactly one argument
+                if (command.length != 1) {
+                    throw new IllegalArgumentException("Invalid number of arguments. Expected 1.");
+                }
+
                 System.out.println(noauth);
                 yield UIState.LOG_OUT;
             default:
