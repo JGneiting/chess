@@ -8,7 +8,6 @@ import model.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 
 import static ui.EscapeSequences.*;
@@ -50,6 +49,12 @@ public class ClientLoop {
             SET_TEXT_COLOR_GREEN, SET_TEXT_COLOR_BLUE, SET_TEXT_COLOR_GREEN, SET_TEXT_COLOR_BLUE,
             SET_TEXT_COLOR_GREEN, SET_TEXT_COLOR_BLUE, RESET_TEXT_COLOR);
 
+    private static final String BOARD_BORDER_COLOR = SET_BG_COLOR_DARK_GREEN + SET_TEXT_COLOR_LIGHT_GREY;
+    private static final String BOARD_LIGHT_SQUARE_COLOR = SET_BG_COLOR_LIGHT_GREY + SET_TEXT_COLOR_LIGHT_GREY;
+    private static final String BOARD_DARK_SQUARE_COLOR = SET_BG_COLOR_DARK_GREY + SET_TEXT_COLOR_DARK_GREY;
+    private static final String WHITE_PIECE_COLOR = SET_TEXT_COLOR_WHITE;
+    private static final String BLACK_PIECE_COLOR = SET_TEXT_COLOR_BLACK;
+
     private final String[] rowLabels = {
         "A", "B", "C", "D", "E", "F", "G", "H"
     };
@@ -58,17 +63,7 @@ public class ClientLoop {
         "8", "7", "6", "5", "4", "3", "2", "1"
     };
 
-    private final HashMap<ChessPiece.PieceType, String> whitePieceMap = new HashMap<>() {{
-        put(ChessPiece.PieceType.KING, WHITE_KING);
-        put(ChessPiece.PieceType.QUEEN, WHITE_QUEEN);
-        put(ChessPiece.PieceType.BISHOP, WHITE_BISHOP);
-        put(ChessPiece.PieceType.KNIGHT, WHITE_KNIGHT);
-        put(ChessPiece.PieceType.ROOK, WHITE_ROOK);
-        put(ChessPiece.PieceType.PAWN, WHITE_PAWN);
-        put(null, EMPTY);
-    }};
-
-    private final HashMap<ChessPiece.PieceType, String> blackPieceMap = new HashMap<>() {{
+    private final HashMap<ChessPiece.PieceType, String> pieceMap = new HashMap<>() {{
         put(ChessPiece.PieceType.KING, BLACK_KING);
         put(ChessPiece.PieceType.QUEEN, BLACK_QUEEN);
         put(ChessPiece.PieceType.BISHOP, BLACK_BISHOP);
@@ -303,29 +298,28 @@ public class ClientLoop {
         }
 
         // Print the board
-        System.out.printf("%s%s%s    %s    %s%s%s%n",
-                SET_BG_COLOR_DARK_GREEN, SET_TEXT_COLOR_LIGHT_GREY, PIXEL,
-                String.join(PIXEL.repeat(5), viewRowLabels),
-                PIXEL, RESET_BG_COLOR, RESET_TEXT_COLOR
-        );
+        displayLabelRow(viewRowLabels);
         int i = 0;
         for (String row : board) {
-            System.out.printf("%s%s %s %s%s%s %s %s%s%n",
-                    SET_BG_COLOR_DARK_GREEN, SET_TEXT_COLOR_LIGHT_GREY, viewColumnLabels[i], row,
-                    SET_BG_COLOR_DARK_GREEN, SET_TEXT_COLOR_LIGHT_GREY, viewColumnLabels[i],
+            System.out.printf("%s %s %s%s %s %s%s%n",
+                    BOARD_BORDER_COLOR, viewColumnLabels[i], row,
+                    BOARD_BORDER_COLOR, viewColumnLabels[i],
                     RESET_TEXT_COLOR, RESET_BG_COLOR
             );
             i++;
         }
-        System.out.printf("%s%s%s    %s    %s%s%s%n",
-                SET_BG_COLOR_DARK_GREEN, SET_TEXT_COLOR_LIGHT_GREY, PIXEL,
-                String.join(PIXEL.repeat(5), viewRowLabels),
-                PIXEL, RESET_BG_COLOR, RESET_TEXT_COLOR
-        );
+        displayLabelRow(viewRowLabels);
 
         return UIState.QUIT;
     }
 
+    private static void displayLabelRow(String[] viewRowLabels) {
+        System.out.printf("%s%s    %s    %s%s%s%n",
+                BOARD_BORDER_COLOR, PIXEL,
+                String.join(PIXEL.repeat(5), viewRowLabels),
+                PIXEL, RESET_BG_COLOR, RESET_TEXT_COLOR
+        );
+    }
 
     private Collection<String> convertBoard(ChessGame game, String role) {
         Collection<String> board = new ArrayList<>();
@@ -337,27 +331,27 @@ public class ClientLoop {
             for (int j = white ? 1 : 8; white ? j < 9 : j > 0; j+= white ? 1 : -1) {
                 ChessPiece piece = gameBoard.getPiece(new ChessPosition(9-i, j));
                 if ((i + j) % 2 == 0) {
-                    row.append(SET_BG_COLOR_LIGHT_GREY);
+                    row.append(BOARD_LIGHT_SQUARE_COLOR);
                 } else {
-                    row.append(SET_BG_COLOR_DARK_GREY);
+                    row.append(BOARD_DARK_SQUARE_COLOR);
                 }
 
                 // Set the color of the piece
                 if (piece != null) {
                     if (piece.getTeamColor() == ChessGame.TeamColor.BLACK) {
-                        row.append(SET_TEXT_COLOR_BLACK);
-                        row.append(blackPieceMap.get(piece.getPieceType()));
+                        row.append(BLACK_PIECE_COLOR);
+                        row.append(pieceMap.get(piece.getPieceType()));
                     } else {
-                        row.append(SET_TEXT_COLOR_WHITE);
-                        row.append(blackPieceMap.get(piece.getPieceType()));
+                        row.append(WHITE_PIECE_COLOR);
+                        row.append(pieceMap.get(piece.getPieceType()));
                     }
                 } else {
                     if ((i + j) % 2 == 0) {
-                        row.append(SET_TEXT_COLOR_LIGHT_GREY);
+                        row.append(BOARD_LIGHT_SQUARE_COLOR);
                     } else {
-                        row.append(SET_TEXT_COLOR_DARK_GREY);
+                        row.append(BOARD_DARK_SQUARE_COLOR);
                     }
-                    row.append(blackPieceMap.get(ChessPiece.PieceType.PAWN));
+                    row.append(pieceMap.get(ChessPiece.PieceType.PAWN));
                 }
             }
             row.append(RESET_BG_COLOR);
