@@ -11,7 +11,7 @@ import service.UserService;
 import spark.*;
 
 public class Handlers {
-    private static Gson SERIALIZER;
+    private static final Gson SERIALIZER;
 
     static {
         GsonBuilder gsonBuilder = new GsonBuilder();

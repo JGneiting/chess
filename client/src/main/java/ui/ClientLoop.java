@@ -107,6 +107,12 @@ public class ClientLoop {
         }
     }
 
+    private void expectCommandCount(String[] command, int count) {
+        if (command.length != count) {
+            throw new IllegalArgumentException("Invalid number of arguments. Expected " + count + ".");
+        }
+    }
+
     private void displayStateString(UIState state) {
         switch (state) {
             case LOG_OUT:
@@ -127,9 +133,7 @@ public class ClientLoop {
         return switch (command[0]) {
             case "register" :
                 // We expect exactly 4 arguments
-                if (command.length != 4) {
-                    throw new IllegalArgumentException("Invalid number of arguments. Expected 4.");
-                }
+                expectCommandCount(command, 4);
 
                 // Send the register request
                 RegisterRequest request = new RegisterRequest(command[1], command[2], command[3]);
@@ -137,9 +141,7 @@ public class ClientLoop {
                 yield UIState.LOG_OUT;
             case "login":
                 // We expect exactly 3 arguments
-                if (command.length != 3) {
-                    throw new IllegalArgumentException("Invalid number of arguments. Expected 3.");
-                }
+                expectCommandCount(command, 3);
 
                 // Send login request
                 LoginRequest loginRequest = new LoginRequest(command[1], command[2]);
@@ -150,16 +152,12 @@ public class ClientLoop {
                 yield UIState.LOG_IN;
             case "quit":
                 // Expect exactly one argument
-                if (command.length != 1) {
-                    throw new IllegalArgumentException("Invalid number of arguments. Expected 1.");
-                }
+                expectCommandCount(command, 1);
 
                 yield UIState.QUIT;
             case "help":
                 // Expect exactly one argument
-                if (command.length != 1) {
-                    throw new IllegalArgumentException("Invalid number of arguments. Expected 1.");
-                }
+                expectCommandCount(command, 1);
 
                 System.out.println(noauth);
                 yield UIState.LOG_OUT;
@@ -173,9 +171,7 @@ public class ClientLoop {
         return switch (command[0]) {
             case "create":
                 // Expect two arguments
-                if (command.length != 2) {
-                    throw new IllegalArgumentException("Invalid number of arguments. Expected 2.");
-                }
+                expectCommandCount(command, 2);
 
                 // Create the game on the server
                 NewGameRequest request = new NewGameRequest(authToken, command[1]);
@@ -184,9 +180,7 @@ public class ClientLoop {
                 yield UIState.LOG_IN;
             case "list":
                 // Expect one argument
-                if (command.length != 1) {
-                    throw new IllegalArgumentException("Invalid number of arguments. Expected 1.");
-                }
+                expectCommandCount(command, 1);
                 gameMap.clear();
 
                 // Send list request
@@ -215,9 +209,7 @@ public class ClientLoop {
                 yield UIState.LOG_IN;
             case "join":
                 // Expect 3 arguments
-                if (command.length != 3) {
-                    throw new IllegalArgumentException("Invalid number of arguments. Expected 3.");
-                }
+                expectCommandCount(command, 3);
                 // Game ID must be in the gameMap
                 if (!gameMap.containsKey(Integer.parseInt(command[1]))) {
                     throw new IllegalArgumentException("Invalid game ID.");
@@ -235,9 +227,7 @@ public class ClientLoop {
                 yield UIState.GAMEPLAY;
             case "observe":
                 // Expect exactly 2 arguments
-                if (command.length != 2) {
-                    throw new IllegalArgumentException("Invalid number of arguments. Expected 2.");
-                }
+                expectCommandCount(command, 2);
                 // Game ID must be in the gameMap
                 if (!gameMap.containsKey(Integer.parseInt(command[1]))) {
                     throw new IllegalArgumentException("Invalid game ID.");
@@ -250,9 +240,7 @@ public class ClientLoop {
                 yield UIState.GAMEPLAY;
             case "logout":
                 // Expect exactly one argument
-                if (command.length != 1) {
-                    throw new IllegalArgumentException("Invalid number of arguments. Expected 1.");
-                }
+                expectCommandCount(command, 1);
 
                 // Send logout request
                 LogoutRequest logoutRequest = new LogoutRequest(authToken);
@@ -264,8 +252,12 @@ public class ClientLoop {
 
                 yield UIState.LOG_OUT;
             case "quit":
+                // Expect exactly one argument
+                expectCommandCount(command, 1);
                 yield UIState.QUIT;
             case "help":
+                // Expect exactly one argument
+                expectCommandCount(command, 1);
                 System.out.println(auth);
                 yield UIState.LOG_IN;
             default:
