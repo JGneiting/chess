@@ -181,8 +181,27 @@ public class ClientLoop {
                 }
                 yield UIState.LOG_IN;
             case "join":
+                // Expect 3 arguments
+                if (command.length != 3) {
+                    throw new IllegalArgumentException("Invalid number of arguments. Expected 3.");
+                }
+                // Game ID must be in the gameMap
+                if (!gameMap.containsKey(Integer.parseInt(command[1]))) {
+                    throw new IllegalArgumentException("Invalid game ID.");
+                }
+                // Third argument must be either "WHITE" or "BLACK"
+                if (!command[2].equals("WHITE") && !command[2].equals("BLACK")) {
+                    throw new IllegalArgumentException("Invalid player color. Must be either 'WHITE' or 'BLACK'.");
+                }
+
+                int gameID = gameMap.get(Integer.parseInt(command[1]));
+                // Join the game
+                JoinGameRequest joinRequest = new JoinGameRequest(authToken, command[2], gameID);
+                facade.joinGame(joinRequest);
                 yield UIState.GAMEPLAY;
             case "observe":
+                // Not implemented yet
+                System.out.println(SET_TEXT_COLOR_RED + "Not implemented yet." + RESET_TEXT_COLOR);
                 yield UIState.LOG_IN;
             case "logout":
                 // Expect exactly one argument
@@ -193,7 +212,7 @@ public class ClientLoop {
                 // Send logout request
                 LogoutRequest logoutRequest = new LogoutRequest(authToken);
                 facade.logout(logoutRequest);
-                System.out.println(SET_TEXT_COLOR_BLUE + "Logged out." + RESET_TEXT_COLOR);
+                System.out.println(SET_TEXT_COLOR_BLUE + "Logged out" + RESET_TEXT_COLOR);
 
                 // Clear the authToken
                 authToken = null;
