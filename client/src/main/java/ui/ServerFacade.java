@@ -62,7 +62,7 @@ public class ServerFacade {
                 }
             }
 
-            throw new ResponseException(status, "other failure: " + status);
+            throw new ResponseException(status, "Error Processing Request");
         }
     }
 
