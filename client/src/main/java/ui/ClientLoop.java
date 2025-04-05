@@ -137,18 +137,21 @@ public class ClientLoop {
 
                 // Send the register request
                 RegisterRequest request = new RegisterRequest(command[1], command[2], command[3]);
-                facade.register(request);
-                yield UIState.LOG_OUT;
+                RegisterResult regResult = facade.register(request);
+
+                authToken = regResult.authToken();
+                System.out.println(SET_TEXT_COLOR_BLUE + "Logged in as " + regResult.username() + RESET_TEXT_COLOR);
+                yield UIState.LOG_IN;
             case "login":
                 // We expect exactly 3 arguments
                 expectCommandCount(command, 3);
 
                 // Send login request
                 LoginRequest loginRequest = new LoginRequest(command[1], command[2]);
-                LoginResult result = facade.login(loginRequest);
+                LoginResult logResult = facade.login(loginRequest);
                 // Save the authToken
-                authToken = result.authToken();
-                System.out.println(SET_TEXT_COLOR_BLUE + "Logged in as " + result.username() + RESET_TEXT_COLOR);
+                authToken = logResult.authToken();
+                System.out.println(SET_TEXT_COLOR_BLUE + "Logged in as " + logResult.username() + RESET_TEXT_COLOR);
                 yield UIState.LOG_IN;
             case "quit":
                 // Expect exactly one argument
@@ -168,15 +171,23 @@ public class ClientLoop {
 
     private UIState loginOptions(String in) {
         String[] command = parseCommand(in);
+        int gameID;
         return switch (command[0]) {
             case "create":
-                // Expect two arguments
-                expectCommandCount(command, 2);
+                // Expect at least two arguments
+                if (command.length < 2) {
+                    throw new IllegalArgumentException("Invalid number of arguments. Expected 2");
+                }
+                // Join parameters 1 - end to create the game name
+                String name = "";
+                for (int i = 1; i < command.length; i++) {
+                    name += command[i] + " ";
+                }
 
                 // Create the game on the server
-                NewGameRequest request = new NewGameRequest(authToken, command[1]);
+                NewGameRequest request = new NewGameRequest(authToken, name);
                 facade.createGame(request);
-                System.out.println(SET_TEXT_COLOR_BLUE + "Created game " + command[1] + RESET_TEXT_COLOR);
+                System.out.println(SET_TEXT_COLOR_BLUE + "Created new game: " + name + RESET_TEXT_COLOR);
                 yield UIState.LOG_IN;
             case "list":
                 // Expect one argument
@@ -188,38 +199,17 @@ public class ClientLoop {
                 ListGamesResult listResult = facade.listGames(listRequest);
 
                 // Print the list of games
-                int i = 1;
-                for (GameData game : listResult.games()) {
-                    // Associate i with gameID
-                    gameMap.put(i, game.gameID());
-
-                    System.out.printf("%s[%s%s%s]: %sGame Name: %s%s%s%n",
-                            SET_TEXT_COLOR_MAGENTA, SET_TEXT_COLOR_YELLOW, i, SET_TEXT_COLOR_MAGENTA, SET_TEXT_BOLD,
-                            RESET_TEXT_BOLD_FAINT, game.gameName(), RESET_TEXT_COLOR);
-
-                    // Print the players
-                    String white = game.whiteUsername() == null ? SET_TEXT_COLOR_RED + "None" : game.whiteUsername();
-                    String black = game.blackUsername() == null ? SET_TEXT_COLOR_RED + "None" : game.blackUsername();
-                    System.out.printf("    %sWhite:%s %s%s%s%n",
-                            SET_TEXT_COLOR_LIGHT_GREY, RESET_TEXT_COLOR, SET_TEXT_COLOR_BLUE, white, RESET_TEXT_COLOR);
-                    System.out.printf("    %sBlack:%s %s%s%s%n",
-                            SET_TEXT_COLOR_LIGHT_GREY, RESET_TEXT_COLOR, SET_TEXT_COLOR_BLUE, black, RESET_TEXT_COLOR);
-                    i++;
-                }
+                displayGameList(listResult);
                 yield UIState.LOG_IN;
             case "join":
                 // Expect 3 arguments
                 expectCommandCount(command, 3);
-                // Game ID must be in the gameMap
-                if (!gameMap.containsKey(Integer.parseInt(command[1]))) {
-                    throw new IllegalArgumentException("Invalid game ID.");
-                }
+                gameID = validateGameId(command[1]);
                 // Third argument must be either "WHITE" or "BLACK"
                 if (!command[2].equals("WHITE") && !command[2].equals("BLACK")) {
                     throw new IllegalArgumentException("Invalid player color. Must be either 'WHITE' or 'BLACK'.");
                 }
 
-                int gameID = gameMap.get(Integer.parseInt(command[1]));
                 // Join the game
                 JoinGameRequest joinRequest = new JoinGameRequest(authToken, command[2], gameID);
                 facade.joinGame(joinRequest);
@@ -228,13 +218,11 @@ public class ClientLoop {
             case "observe":
                 // Expect exactly 2 arguments
                 expectCommandCount(command, 2);
-                // Game ID must be in the gameMap
-                if (!gameMap.containsKey(Integer.parseInt(command[1]))) {
-                    throw new IllegalArgumentException("Invalid game ID.");
-                }
+                // Second argument must be a number
+                gameID = validateGameId(command[1]);
 
                 // Observe not implemented
-                System.out.println(SET_TEXT_COLOR_RED + "Observe not implemented" + RESET_TEXT_COLOR);
+//                System.out.println(SET_TEXT_COLOR_RED + "Observe not implemented" + RESET_TEXT_COLOR);
                 joinRole = "OBSERVER";
 
                 yield UIState.GAMEPLAY;
@@ -264,6 +252,43 @@ public class ClientLoop {
                 System.out.println("Invalid command. Type 'help' for a list of commands.");
                 yield UIState.LOG_IN;
         };
+    }
+
+    private int validateGameId(String gameID) {
+        // Second argument must be a number
+        if (!gameID.matches("\\d+")) {
+            throw new IllegalArgumentException("Invalid game ID. Must be a number.");
+        }
+        // Game ID must be in the gameMap
+        if (!gameMap.containsKey(Integer.parseInt(gameID))) {
+            throw new IllegalArgumentException("Invalid game ID. Game does not exist.");
+        }
+        return gameMap.get(Integer.parseInt(gameID));
+    }
+
+    private void displayGameList(ListGamesResult listResult) {
+        int i = 1;
+        if (listResult.games().length == 0) {
+            System.out.println(SET_TEXT_COLOR_RED + "No games available" + RESET_TEXT_COLOR);
+            return;
+        }
+        for (GameData game : listResult.games()) {
+            // Associate i with gameID
+            gameMap.put(i, game.gameID());
+
+            System.out.printf("%s[%s%s%s]: %sGame Name: %s%s%s%n",
+                    SET_TEXT_COLOR_MAGENTA, SET_TEXT_COLOR_YELLOW, i, SET_TEXT_COLOR_MAGENTA, SET_TEXT_BOLD,
+                    RESET_TEXT_BOLD_FAINT, game.gameName(), RESET_TEXT_COLOR);
+
+            // Print the players
+            String white = game.whiteUsername() == null ? SET_TEXT_COLOR_RED + "None" : game.whiteUsername();
+            String black = game.blackUsername() == null ? SET_TEXT_COLOR_RED + "None" : game.blackUsername();
+            System.out.printf("    %sWhite:%s %s%s%s%n",
+                    SET_TEXT_COLOR_LIGHT_GREY, RESET_TEXT_COLOR, SET_TEXT_COLOR_BLUE, white, RESET_TEXT_COLOR);
+            System.out.printf("    %sBlack:%s %s%s%s%n",
+                    SET_TEXT_COLOR_LIGHT_GREY, RESET_TEXT_COLOR, SET_TEXT_COLOR_BLUE, black, RESET_TEXT_COLOR);
+            i++;
+        }
     }
 
     private UIState gameplayOptions(String in) {
@@ -302,7 +327,7 @@ public class ClientLoop {
         }
         displayLabelRow(viewRowLabels);
 
-        return UIState.QUIT;
+        return UIState.LOG_IN;
     }
 
     private static void displayLabelRow(String[] viewRowLabels) {
