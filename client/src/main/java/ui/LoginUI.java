@@ -68,7 +68,7 @@ public class LoginUI {
                 // Join the game
                 JoinGameRequest joinRequest = new JoinGameRequest(ClientLoop.getAuthToken(), command[2], gameID);
                 ClientLoop.facade.joinGame(joinRequest);
-                ClientLoop.setJoinRole(command[2]);
+                GameplayUI.setRole(command[2]);
                 yield ClientLoop.UIState.GAMEPLAY;
             case "observe":
                 // Expect exactly 2 arguments
@@ -78,7 +78,7 @@ public class LoginUI {
 
                 // Observe not implemented
 //                System.out.println(SET_TEXT_COLOR_RED + "Observe not implemented" + RESET_TEXT_COLOR);
-                ClientLoop.setJoinRole("OBSERVER");
+                GameplayUI.setRole("OBSERVER");
 
                 yield ClientLoop.UIState.GAMEPLAY;
             case "logout":

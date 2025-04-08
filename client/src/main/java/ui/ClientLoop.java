@@ -1,15 +1,5 @@
 package ui;
 
-import chess.ChessBoard;
-import chess.ChessGame;
-import chess.ChessPiece;
-import chess.ChessPosition;
-import model.*;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-
 import static ui.EscapeSequences.*;
 
 public class ClientLoop {
@@ -22,12 +12,6 @@ public class ClientLoop {
 
     private static String authToken;
     static ServerFacade facade;
-
-    private static String joinRole;
-
-    public static void setJoinRole(String role) {
-        joinRole = role;
-    }
 
    public static String getAuthToken() {
         return authToken;
@@ -46,6 +30,9 @@ public class ClientLoop {
     }
 
     public void run() {
+        LogoutUI logoutUI = new LogoutUI();
+        LoginUI loginUI = new LoginUI();
+        GameplayUI gameplayUI = new GameplayUI(facade);
         // Listen loop
         String input = "";
         var state = UIState.LOG_OUT;
@@ -57,14 +44,11 @@ public class ClientLoop {
             try {
                 state = switch (state) {
                     case LOG_OUT:
-                        LogoutUI logoutUI = new LogoutUI();
                         yield logoutUI.logoutOptions(input);
                     case LOG_IN:
-                        LoginUI loginUI = new LoginUI();
                         yield loginUI.loginOptions(input);
                     case GAMEPLAY:
-                        GameplayUI gameplayUI = new GameplayUI(facade);
-                        yield gameplayUI.runGameplay(joinRole);
+                        yield gameplayUI.gameplayOptions(input);
                     default:
                         yield state;
                 };

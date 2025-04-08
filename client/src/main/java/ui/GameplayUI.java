@@ -1,9 +1,6 @@
 package ui;
 
-import chess.ChessBoard;
-import chess.ChessGame;
-import chess.ChessPiece;
-import chess.ChessPosition;
+import chess.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -29,6 +26,10 @@ public class GameplayUI {
     private static final String BOARD_BORDER_COLOR = SET_BG_COLOR_DARK_GREEN + SET_TEXT_COLOR_LIGHT_GREY;
     private static final String BOARD_LIGHT_SQUARE_COLOR = SET_BG_COLOR_LIGHT_GREY + SET_TEXT_COLOR_LIGHT_GREY;
     private static final String BOARD_DARK_SQUARE_COLOR = SET_BG_COLOR_DARK_GREY + SET_TEXT_COLOR_DARK_GREY;
+    private static final String BOARD_LIGHT_SQUARE_HIGHLIGHT_COLOR = SET_BG_COLOR_GREEN + SET_TEXT_COLOR_BLACK;
+    private static final String BOARD_DARK_SQUARE_HIGHLIGHT_COLOR = SET_BG_COLOR_GREEN + SET_TEXT_COLOR_BLACK;
+    private static final String BOARD_LIGHT_SQUARE_SELECT_COLOR = SET_BG_COLOR_YELLOW + SET_TEXT_COLOR_BLACK;
+    private static final String BOARD_DARK_SQUARE_SELECT_COLOR = SET_BG_COLOR_YELLOW + SET_TEXT_COLOR_BLACK;
     private static final String WHITE_PIECE_COLOR = SET_TEXT_COLOR_WHITE;
     private static final String BLACK_PIECE_COLOR = SET_TEXT_COLOR_BLACK;
 
@@ -51,26 +52,79 @@ public class GameplayUI {
     }};
 
     private final ServerFacade facade;
+    static String role;
+    private ChessGame game;
+
+    public static void setRole(String role) {
+        GameplayUI.role = role;
+    }
 
     public GameplayUI(ServerFacade facade) {
         // Set the role for the game
         this.facade = facade;
     }
 
-    public ClientLoop.UIState runGameplay(String role) {
-        // For now, draw a new chessGame in proper orientation
-        ChessGame game = new ChessGame();
-        boolean white = !role.equals("BLACK");
+    public ClientLoop.UIState gameplayOptions(String input) {
+        // Parse the command
+        String[] command = ClientLoop.parseCommand(input);
+        return switch (command[0]) {
+            case "redraw" -> {
+                // Expect exactly one argument
+                ClientLoop.expectCommandCount(command, 1);
+                yield ClientLoop.UIState.GAMEPLAY;
+            }
+            case "leave" -> {
+                // Expect exactly one argument
+                ClientLoop.expectCommandCount(command, 1);
+                yield ClientLoop.UIState.LOG_IN;
+            }
+            case "move" -> {
+                // Expect exactly three arguments
+                ClientLoop.expectCommandCount(command, 3);
+                // Send move request
 
-        // Convert board to list of strings
-        Collection<String> board = convertBoard(game, role);
+                yield ClientLoop.UIState.GAMEPLAY;
+            }
+            case "resign" -> {
+                // Expect exactly one argument
+                ClientLoop.expectCommandCount(command, 1);
+                // Send resign message
+                yield ClientLoop.UIState.LOG_IN;
+            }
+            case "highlight" -> {
+                // Expect exactly two arguments
+                ClientLoop.expectCommandCount(command, 2);
+                // Check that the square matches pattern of a chess position
+                if (!command[1].matches("[A-H][1-8]")) {
+                    throw new IllegalArgumentException("Invalid position. Use format <LETTER><NUMBER>.");
+                }
+                int row = 9 - (command[1].charAt(1) - '0');
+                int column = command[1].charAt(0) - 'A' + 1;
+                ChessPosition selectedPosition = new ChessPosition(row, column);
+                // Get the valid moves for the piece at the selected position
+                Collection<ChessMove> validMoves = game.validMoves(selectedPosition);
+                Collection<ChessPosition> highlightedPositions = new ArrayList<>();
+                for (ChessMove move : validMoves) {
+                    highlightedPositions.add(move.getEndPosition());
+                }
+                // Redraw the board
+                Collection<String> board = convertBoard(highlightedPositions, selectedPosition);
+                drawBoard(board);
 
-        drawBoard(white, board);
-
-        return ClientLoop.UIState.LOG_IN;
+                yield ClientLoop.UIState.GAMEPLAY;
+            }
+            case "help" -> {
+                // Expect exactly one argument
+                ClientLoop.expectCommandCount(command, 1);
+                System.out.println(gameplay);
+                yield ClientLoop.UIState.GAMEPLAY;
+            }
+            default -> throw new IllegalArgumentException("Invalid command. Type 'help' for a list of commands.");
+        };
     }
 
-    private void drawBoard(boolean white, Collection<String> board) {
+    private void drawBoard(Collection<String> board) {
+        boolean white = !role.equals("BLACK");
         // Generate the view row and column label lists
         String[] viewRowLabels;
         String[] viewColumnLabels;
@@ -108,7 +162,12 @@ public class GameplayUI {
         );
     }
 
-    private Collection<String> convertBoard(ChessGame game, String role) {
+    private Collection<String> convertBoard() {
+        Collection<ChessPosition> highlights = new ArrayList<>();
+        return convertBoard(highlights, null);
+    }
+
+    private Collection<String> convertBoard(Collection<ChessPosition> highlightedPositions, ChessPosition selectedPosition) {
         Collection<String> board = new ArrayList<>();
         boolean white = !role.equals("BLACK");
 
@@ -117,10 +176,22 @@ public class GameplayUI {
             StringBuilder row = new StringBuilder();
             for (int j = white ? 1 : 8; white ? j < 9 : j > 0; j+= white ? 1 : -1) {
                 ChessPiece piece = gameBoard.getPiece(new ChessPosition(9-i, j));
+                boolean highlight = highlightedPositions.contains(new ChessPosition(9-i, j));
+                boolean selected = selectedPosition != null && selectedPosition.equals(new ChessPosition(9-i, j));
                 if ((i + j) % 2 == 0) {
-                    row.append(BOARD_LIGHT_SQUARE_COLOR);
+                    if (highlight)
+                        row.append(BOARD_LIGHT_SQUARE_HIGHLIGHT_COLOR);
+                    else if (selected)
+                        row.append(BOARD_LIGHT_SQUARE_SELECT_COLOR);
+                    else
+                        row.append(BOARD_LIGHT_SQUARE_COLOR);
                 } else {
-                    row.append(BOARD_DARK_SQUARE_COLOR);
+                    if (highlight)
+                        row.append(BOARD_DARK_SQUARE_HIGHLIGHT_COLOR);
+                    else if (selected)
+                        row.append(BOARD_DARK_SQUARE_SELECT_COLOR);
+                    else
+                        row.append(BOARD_DARK_SQUARE_COLOR);
                 }
 
                 // Set the color of the piece

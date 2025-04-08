@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import model.*;
+import websocket.commands.UserGameCommand;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -138,5 +139,9 @@ public class ServerFacade {
     public void joinGame(JoinGameRequest request) throws ResponseException {
         var path = "/game";
         makeRequest("PUT", path, request, null);
+    }
+
+    public void sendWSMessage(UserGameCommand command) {
+        // Send command to WS server
     }
 }
