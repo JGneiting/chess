@@ -26,12 +26,12 @@ public class GameplayUI {
     private static final String BOARD_BORDER_COLOR = SET_BG_COLOR_DARK_GREEN + SET_TEXT_COLOR_LIGHT_GREY;
     private static final String BOARD_LIGHT_SQUARE_COLOR = SET_BG_COLOR_LIGHT_GREY + SET_TEXT_COLOR_LIGHT_GREY;
     private static final String BOARD_DARK_SQUARE_COLOR = SET_BG_COLOR_DARK_GREY + SET_TEXT_COLOR_DARK_GREY;
-    private static final String BOARD_LIGHT_HIGHLIGHT_COLOR = SET_BG_COLOR_GREEN + SET_TEXT_COLOR_GREEN;
-    private static final String BOARD_DARK_HIGHLIGHT_COLOR = SET_BG_COLOR_GREEN + SET_TEXT_COLOR_GREEN;
-    private static final String BOARD_LIGHT_SQUARE_HIGHLIGHT_COLOR = SET_BG_COLOR_GREEN + SET_TEXT_COLOR_BLACK;
-    private static final String BOARD_DARK_SQUARE_HIGHLIGHT_COLOR = SET_BG_COLOR_GREEN + SET_TEXT_COLOR_BLACK;
-    private static final String BOARD_LIGHT_SQUARE_SELECT_COLOR = SET_BG_COLOR_YELLOW + SET_TEXT_COLOR_BLACK;
-    private static final String BOARD_DARK_SQUARE_SELECT_COLOR = SET_BG_COLOR_YELLOW + SET_TEXT_COLOR_BLACK;
+    private static final String BOARD_LIGHT_HIGHLIGHT_COLOR = SET_BG_COLOR_LIGHT_BLUE + SET_TEXT_COLOR_LIGHT_BLUE;
+    private static final String BOARD_DARK_HIGHLIGHT_COLOR = SET_BG_COLOR_DARK_BLUE + SET_TEXT_COLOR_DARK_BLUE;
+    private static final String BOARD_LIGHT_SQUARE_HIGHLIGHT_COLOR = SET_BG_COLOR_LIGHT_BLUE + SET_TEXT_COLOR_BLACK;
+    private static final String BOARD_DARK_SQUARE_HIGHLIGHT_COLOR = SET_BG_COLOR_DARK_BLUE + SET_TEXT_COLOR_BLACK;
+    private static final String BOARD_LIGHT_SQUARE_SELECT_COLOR = SET_BG_COLOR_LIGHT_YELLOW + SET_TEXT_COLOR_BLACK;
+    private static final String BOARD_DARK_SQUARE_SELECT_COLOR = SET_BG_COLOR_DARK_YELLOW + SET_TEXT_COLOR_BLACK;
     private static final String WHITE_PIECE_COLOR = SET_TEXT_COLOR_WHITE;
     private static final String BLACK_PIECE_COLOR = SET_TEXT_COLOR_BLACK;
 
@@ -56,9 +56,14 @@ public class GameplayUI {
     private final ServerFacade facade;
     static String role;
     private static ChessGame game;
+    private static int gameID;
 
     public static void setRole(String role) {
         GameplayUI.role = role;
+    }
+
+    public static void setGameID(int gameID) {
+        GameplayUI.gameID = gameID;
     }
 
     public static void setGame(ChessGame game) {
@@ -71,6 +76,10 @@ public class GameplayUI {
     }
 
     public ClientLoop.UIState gameplayOptions(String input) {
+        // If game is null, give default board
+        if (game == null) {
+            game = new ChessGame();
+        }
         // Parse the command
         String[] command = ClientLoop.parseCommand(input);
         return switch (command[0]) {
