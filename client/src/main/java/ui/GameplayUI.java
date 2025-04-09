@@ -26,6 +26,8 @@ public class GameplayUI {
     private static final String BOARD_BORDER_COLOR = SET_BG_COLOR_DARK_GREEN + SET_TEXT_COLOR_LIGHT_GREY;
     private static final String BOARD_LIGHT_SQUARE_COLOR = SET_BG_COLOR_LIGHT_GREY + SET_TEXT_COLOR_LIGHT_GREY;
     private static final String BOARD_DARK_SQUARE_COLOR = SET_BG_COLOR_DARK_GREY + SET_TEXT_COLOR_DARK_GREY;
+    private static final String BOARD_LIGHT_HIGHLIGHT_COLOR = SET_BG_COLOR_GREEN + SET_TEXT_COLOR_GREEN;
+    private static final String BOARD_DARK_HIGHLIGHT_COLOR = SET_BG_COLOR_GREEN + SET_TEXT_COLOR_GREEN;
     private static final String BOARD_LIGHT_SQUARE_HIGHLIGHT_COLOR = SET_BG_COLOR_GREEN + SET_TEXT_COLOR_BLACK;
     private static final String BOARD_DARK_SQUARE_HIGHLIGHT_COLOR = SET_BG_COLOR_GREEN + SET_TEXT_COLOR_BLACK;
     private static final String BOARD_LIGHT_SQUARE_SELECT_COLOR = SET_BG_COLOR_YELLOW + SET_TEXT_COLOR_BLACK;
@@ -53,10 +55,14 @@ public class GameplayUI {
 
     private final ServerFacade facade;
     static String role;
-    private ChessGame game;
+    private static ChessGame game;
 
     public static void setRole(String role) {
         GameplayUI.role = role;
+    }
+
+    public static void setGame(ChessGame game) {
+        GameplayUI.game = game;
     }
 
     public GameplayUI(ServerFacade facade) {
@@ -71,6 +77,9 @@ public class GameplayUI {
             case "redraw" -> {
                 // Expect exactly one argument
                 ClientLoop.expectCommandCount(command, 1);
+                // Redraw the board
+                Collection<String> board = convertBoard();
+                drawBoard(board);
                 yield ClientLoop.UIState.GAMEPLAY;
             }
             case "leave" -> {
@@ -98,7 +107,7 @@ public class GameplayUI {
                 if (!command[1].matches("[A-H][1-8]")) {
                     throw new IllegalArgumentException("Invalid position. Use format <LETTER><NUMBER>.");
                 }
-                int row = 9 - (command[1].charAt(1) - '0');
+                int row = command[1].charAt(1) - '0';
                 int column = command[1].charAt(0) - 'A' + 1;
                 ChessPosition selectedPosition = new ChessPosition(row, column);
                 // Get the valid moves for the piece at the selected position
@@ -176,7 +185,13 @@ public class GameplayUI {
             StringBuilder row = new StringBuilder();
             for (int j = white ? 1 : 8; white ? j < 9 : j > 0; j+= white ? 1 : -1) {
                 ChessPiece piece = gameBoard.getPiece(new ChessPosition(9-i, j));
-                boolean highlight = highlightedPositions.contains(new ChessPosition(9-i, j));
+                boolean highlight = false;
+                for (ChessPosition pos : highlightedPositions) {
+                    if (pos.equals(new ChessPosition(9-i, j))) {
+                        highlight = true;
+                        break;
+                    }
+                }
                 boolean selected = selectedPosition != null && selectedPosition.equals(new ChessPosition(9-i, j));
                 if ((i + j) % 2 == 0) {
                     if (highlight)
@@ -205,9 +220,15 @@ public class GameplayUI {
                     }
                 } else {
                     if ((i + j) % 2 == 0) {
-                        row.append(BOARD_LIGHT_SQUARE_COLOR);
+                        if (highlight)
+                            row.append(BOARD_LIGHT_HIGHLIGHT_COLOR);
+                        else
+                            row.append(BOARD_LIGHT_SQUARE_COLOR);
                     } else {
-                        row.append(BOARD_DARK_SQUARE_COLOR);
+                        if (highlight)
+                            row.append(BOARD_DARK_HIGHLIGHT_COLOR);
+                        else
+                            row.append(BOARD_DARK_SQUARE_COLOR);
                     }
                     row.append(pieceMap.get(ChessPiece.PieceType.PAWN));
                 }

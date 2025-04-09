@@ -1,5 +1,6 @@
 package ui;
 
+import chess.ChessGame;
 import model.*;
 
 import java.util.HashMap;
@@ -69,6 +70,7 @@ public class LoginUI {
                 JoinGameRequest joinRequest = new JoinGameRequest(ClientLoop.getAuthToken(), command[2], gameID);
                 ClientLoop.facade.joinGame(joinRequest);
                 GameplayUI.setRole(command[2]);
+                GameplayUI.setGame(new ChessGame());
                 yield ClientLoop.UIState.GAMEPLAY;
             case "observe":
                 // Expect exactly 2 arguments

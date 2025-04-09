@@ -37,10 +37,10 @@ public class ClientLoop {
         String input = "";
         var state = UIState.LOG_OUT;
         while (state != UIState.QUIT) {
-            if (state != UIState.GAMEPLAY) {
+//            if (state != UIState.GAMEPLAY) {
                 displayStateString(state);
                 input = System.console().readLine();
-            }
+//            }
             try {
                 state = switch (state) {
                     case LOG_OUT:
@@ -73,6 +73,7 @@ public class ClientLoop {
                 System.out.print("[LOGGED_IN] >>> ");
                 break;
             case GAMEPLAY:
+                System.out.print("[GAMEPLAY] >>> ");
                 break;
             default:
                 System.out.print("Invalid state.");
