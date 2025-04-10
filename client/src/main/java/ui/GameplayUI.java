@@ -240,7 +240,8 @@ public class GameplayUI implements ServerMessageObserver {
         return board;
     }
 
-    private void generateSquare(Collection<ChessPosition> highlightedPositions, ChessPosition selectedPosition, ChessBoard gameBoard, int i, int j, StringBuilder row) {
+    private void generateSquare(Collection<ChessPosition> highlightedPositions, ChessPosition selectedPosition,
+                                ChessBoard gameBoard, int i, int j, StringBuilder row) {
         ChessPiece piece = gameBoard.getPiece(new ChessPosition(9- i, j));
         boolean highlight = false;
         for (ChessPosition pos : highlightedPositions) {
