@@ -18,11 +18,15 @@ public class ChessGame {
 
     TeamColor currentTurn;
     ChessBoard board;
+    TeamColor winner;
+    boolean game_over;
 
     public ChessGame() {
         currentTurn = TeamColor.WHITE;
         board = new ChessBoard();
         board.resetBoard();
+        winner = null;
+        game_over = false;
     }
 
     /**
@@ -56,6 +60,19 @@ public class ChessGame {
         }
         ChessGame that = (ChessGame) o;
         return currentTurn == that.currentTurn && board.equals(that.board);
+    }
+
+    public void markWinner(TeamColor team) {
+        winner = team;
+        game_over = true;
+    }
+
+    public TeamColor getWinner() {
+        return winner;
+    }
+
+    public boolean isGameOver() {
+        return game_over;
     }
 
     /**
@@ -211,7 +228,9 @@ public class ChessGame {
     public void makeMove(ChessMove move) throws InvalidMoveException {
         // Check if move is in the valid set of moves for this piece
         ChessPiece piece = board.getPiece(move.getStartPosition());
-        if (piece == null) {
+        if (game_over) {
+            throw new InvalidMoveException("Game is over");
+        } else if (piece == null) {
             throw new InvalidMoveException("No piece at start position");
         } else if (piece.getTeamColor() != currentTurn) {
             throw new InvalidMoveException("It is not your turn");
@@ -244,6 +263,13 @@ public class ChessGame {
         currentTurn = enemyTeam(currentTurn);
         if (matchingMove instanceof SpecialMove) {
             ((SpecialMove) matchingMove).executeMove(board);
+        }
+
+        // Update game over flag if game is over
+        if (isInCheckmate(currentTurn)) {
+            markWinner(currentTurn);
+        } else if (isInStalemate(currentTurn)) {
+            game_over = true;
         }
     }
 
@@ -361,6 +387,8 @@ public class ChessGame {
             }
             jsonObject.add("board", boardArray);
             jsonObject.add("currentTurn", context.serialize(src.getTeamTurn()));
+            jsonObject.add("winner", context.serialize(src.getWinner()));
+            jsonObject.add("game_over", context.serialize(src.isGameOver()));
             return jsonObject;
         }
     }
@@ -374,6 +402,8 @@ public class ChessGame {
 
             // Deserialize the current turn
             ChessGame.TeamColor currentTurn = context.deserialize(jsonObject.get("currentTurn"), ChessGame.TeamColor.class);
+            game.setWinner(context.deserialize(jsonObject.get("winner"), ChessGame.TeamColor.class));
+            game.setGameOver(jsonObject.get("game_over").getAsBoolean());
             game.setTeamTurn(currentTurn);
 
             // Deserialize the board
@@ -389,5 +419,13 @@ public class ChessGame {
 
             return game;
         }
+    }
+
+    private void setGameOver(boolean gameOver) {
+        this.game_over = gameOver;
+    }
+
+    private void setWinner(TeamColor winner) {
+        this.winner = winner;
     }
 }

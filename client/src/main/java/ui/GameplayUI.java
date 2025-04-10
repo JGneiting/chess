@@ -136,7 +136,7 @@ public class GameplayUI implements ServerMessageObserver {
                 ClientLoop.expectCommandCount(command, 1);
                 // Send resign message
                 facade.resignGame(ClientLoop.getAuthToken(), gameID);
-                yield ClientLoop.UIState.LOG_IN;
+                yield ClientLoop.UIState.GAMEPLAY;
             }
             case "highlight" -> {
                 // Expect exactly two arguments
@@ -300,7 +300,7 @@ public class GameplayUI implements ServerMessageObserver {
             }
             case ERROR -> {
                 // Handle error message
-                System.out.println(SET_TEXT_COLOR_RED + "Error: " + ((ErrorMessage) message).getError() + RESET_TEXT_COLOR);
+                System.out.println(SET_TEXT_COLOR_RED + "Error: " + ((ErrorMessage) message).getErrorMessage() + RESET_TEXT_COLOR);
                 // Redraw command prompt
 
             }

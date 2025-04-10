@@ -9,6 +9,7 @@ import dataaccess.SQLAuthDAO;
 import dataaccess.SQLGameDAO;
 import model.AuthData;
 import model.GameData;
+import org.eclipse.jetty.server.Authentication;
 import org.eclipse.jetty.websocket.api.Session;
 import websocket.commands.MakeMoveCommand;
 import websocket.commands.UserGameCommand;
@@ -21,6 +22,7 @@ import java.util.HashMap;
 public class WSHandlers {
 
     private static final HashMap<Integer, Collection<Session>> subscriptionLists = new HashMap<>();
+    private static final HashMap<Session, String> authTokenLookup = new HashMap<>();
     private static final HashMap<ChessPiece.PieceType, String> pieceNames = new HashMap<>() {{
         put(ChessPiece.PieceType.PAWN, "Pawn");
         put(ChessPiece.PieceType.ROOK, "Rook");
@@ -57,8 +59,13 @@ public class WSHandlers {
     }
 
     public static void parseCommand(UserGameCommand command, Session session) {
+        // Is the connection valid?
+        if (!session.isOpen()) {
+            return;
+        }
         // Handle the command based on its type
         try {
+            validateCommand(command);
             switch (command.getCommandType()) {
                 case CONNECT:
                     handleConnect(command, session);
@@ -78,7 +85,50 @@ public class WSHandlers {
         } catch (DataAccessException e) {
             // Send error message to the client
             sendErrorMessage(session, e.getMessage());
+        } catch (InvalidCommand e) {
+            sendErrorMessage(session, e.getMessage());
         }
+    }
+
+    private static void validateCommand(UserGameCommand command) throws InvalidCommand, DataAccessException {
+        // Check the gameID
+        if (command.getGameID() == null) {
+            throw new InvalidCommand("Game ID is required");
+        }
+        // Check the auth token
+        if (command.getAuthToken() == null || command.getAuthToken().isEmpty()) {
+            throw new InvalidCommand("Auth token is required");
+        }
+
+        // Make sure gameID exists in the database
+        SQLGameDAO gameDatabase = new SQLGameDAO();
+        GameData gameData = gameDatabase.getGame(command.getGameID());
+        if (gameData == null) {
+            throw new InvalidCommand("Game ID does not exist");
+        }
+        // Make sure the authToken exists in the auth database
+        SQLAuthDAO authDatabase = new SQLAuthDAO();
+        AuthData authData = authDatabase.getAuth(command.getAuthToken());
+        if (authData == null) {
+            throw new InvalidCommand("Auth token does not exist");
+        }
+    }
+
+    public static void handleDisconnect(Session session) {
+        // Remove the session from all subscription lists
+        for (Integer gameID : subscriptionLists.keySet()) {
+            removeSubscription(session, gameID);
+            // For each game the user was subscribed to, mock a leave command to notify others
+            UserGameCommand leaveCommand = new UserGameCommand(UserGameCommand.CommandType.LEAVE, authTokenLookup.get(session), gameID);
+            try {
+                handleLeave(leaveCommand, session);
+            } catch (DataAccessException e) {
+                // Do nothing, as the user is already disconnected
+            }
+        }
+
+        // Remove the session from the auth token lookup
+        authTokenLookup.remove(session);
     }
 
     private static void addSubscription(Session session, int gameID) {
@@ -136,10 +186,16 @@ public class WSHandlers {
     private static void handleConnect(UserGameCommand command, Session session) throws DataAccessException {
         // Add the user to the subscription list for the game
         int gameID = command.getGameID();
+        String authToken = command.getAuthToken();
         addSubscription(session, gameID);
 
+        // If this user's auth token is not already in the lookup, add it
+        if (!authTokenLookup.containsKey(session)) {
+            authTokenLookup.put(session, authToken);
+        }
+
         // Get the user's role
-        ChessGame.TeamColor userTeam = userTeam(command.getAuthToken(), gameID);
+        ChessGame.TeamColor userTeam = userTeam(authToken, gameID);
 
         // Determine if the user has connected as white, black, or observer
         String userType;
@@ -151,7 +207,7 @@ public class WSHandlers {
             userType = "an observer";
         }
 
-        String username = getUsername(command.getAuthToken());
+        String username = getUsername(authToken);
         // Send a LOAD_GAME message to the user
         LoadGameMessage loadMessage = generateLoadGameMessage(gameID);
         System.out.println("Sending LOAD_GAME message to " + username);
@@ -179,6 +235,17 @@ public class WSHandlers {
         SQLGameDAO gameDatabase = new SQLGameDAO();
         GameData gameData = gameDatabase.getGame(command.getGameID());
         ChessGame game = gameData.game();
+
+        // If the game is over, do not allow moves
+        if (game.isGameOver()) {
+            String winner = teamNames.get(game.getWinner());
+            if (winner != null) {
+                sendErrorMessage(session, winner + " has already won. No more moves allowed.");
+            } else {
+                sendErrorMessage(session, "Game has ended with a draw. No more moves allowed.");
+            }
+            return;
+        }
 
         // Verify the user owns the source piece
         ChessPiece target = game.getBoard().getPiece(move.getStartPosition());
@@ -259,6 +326,10 @@ public class WSHandlers {
         notifySubscribers(gameID, serverMessage, session, false);
 
         // Remove the user from the subscription list
+        removeSubscription(session, gameID);
+    }
+
+    private static void removeSubscription(Session session, int gameID) {
         Collection<Session> sessions = subscriptionLists.get(gameID);
         if (sessions != null) {
             sessions.remove(session);
@@ -268,7 +339,41 @@ public class WSHandlers {
         }
     }
 
-    private static void handleResign(UserGameCommand command, Session session) {
+    private static void handleResign(UserGameCommand command, Session session) throws DataAccessException {
+        int gameID = command.getGameID();
+        String authToken = command.getAuthToken();
+        String username = getUsername(authToken);
 
+        // Get user role
+        ChessGame.TeamColor userTeam = userTeam(authToken, gameID);
+        if (userTeam == null) {
+            sendErrorMessage(session, "You are an observer in this game");
+            return;
+        }
+
+        // Get the game data
+        SQLGameDAO gameDatabase = new SQLGameDAO();
+        GameData gameData = gameDatabase.getGame(gameID);
+        ChessGame game = gameData.game();
+
+        // Can't resign if the game is already over
+        if (game.isGameOver()) {
+            String winner = teamNames.get(game.getWinner());
+            if (winner != null) {
+                sendErrorMessage(session, winner + " has already won. No more resignations allowed.");
+            } else {
+                sendErrorMessage(session, "Game has ended with a draw. No more resignations allowed.");
+            }
+            return;
+        }
+
+        // Mark the enemy as the winner and save the game
+        game.markWinner(ChessGame.enemyTeam(userTeam));
+        gameDatabase.updateGame(gameData);
+
+        // Notify all subscribers of the resignation
+        String message = username + " has resigned. " + teamNames.get(ChessGame.enemyTeam(userTeam)) + " wins!";
+        ServerMessage serverMessage = new NotificationMessage(message);
+        notifySubscribers(gameID, serverMessage, session, true);
     }
 }

@@ -71,7 +71,7 @@ public class ServerFacade {
         try {
             ws.send(command);
         } catch (Exception e) {
-            throw new RuntimeException("Error sending command to server");
+            throw new RuntimeException("Error sending command to server: " + e.getMessage());
         }
     }
 

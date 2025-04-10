@@ -17,12 +17,19 @@ public class WSClient extends Endpoint {
 
     public Session session;
     private ServerMessageObserver observer;
+    private final URI uri;
+    private final WebSocketContainer container;
 
     public WSClient(String serverURL, int port) throws Exception {
-        URI uri = new URI("ws://" + serverURL + ":" + port + "/ws");
-        WebSocketContainer container = ContainerProvider.getWebSocketContainer();
-        this.session = container.connectToServer(this, uri);
+        uri = new URI("ws://" + serverURL + ":" + port + "/ws");
+        container = ContainerProvider.getWebSocketContainer();
+
         this.observer = null;
+
+    }
+
+    private void establishConnection() throws Exception{
+        this.session = container.connectToServer(this, uri);
         this.session.addMessageHandler(String.class, this::messageReceived);
     }
 
@@ -54,6 +61,10 @@ public class WSClient extends Endpoint {
     public void send(UserGameCommand command) throws Exception {
         // Serialize the command
         String msg = new Gson().toJson(command);
+        // If the session is closed, reconnect
+        if (session == null || !session.isOpen()) {
+            establishConnection();
+        }
         session.getBasicRemote().sendText(msg);
     }
 

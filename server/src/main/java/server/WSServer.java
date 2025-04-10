@@ -56,6 +56,6 @@ public class WSServer {
     @OnWebSocketError
     public void onError(Session session, Throwable throwable) {
         // Handle WebSocket errors
-        System.out.println("WebSocket error: " + throwable.getMessage());
+        WSHandlers.handleDisconnect(session);
     }
 }

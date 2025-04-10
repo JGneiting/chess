@@ -11,6 +11,7 @@ public class Server {
 
     public int run(int desiredPort) {
         Spark.port(desiredPort);
+        WSServer.run(desiredPort);
 
         Spark.staticFiles.location("web");
 
