@@ -10,7 +10,6 @@ import org.eclipse.jetty.websocket.api.Session;
 import spark.Spark;
 import websocket.commands.MakeMoveCommand;
 import websocket.commands.UserGameCommand;
-import websocket.messages.ErrorMessage;
 import websocket.messages.ServerMessage;
 
 import java.io.IOException;
@@ -51,7 +50,7 @@ public class WSServer {
         }
 
         // Pass the command to the command parser
-        WSSHandlers.parseCommand(command, session);
+        WSHandlers.parseCommand(command, session);
     }
 
     @OnWebSocketError

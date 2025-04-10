@@ -290,7 +290,6 @@ public class GameplayUI implements ServerMessageObserver {
     @Override
     public void notify(ServerMessage message) {
         // Determine what kind of message this is
-        System.out.println();
         switch (message.getServerMessageType()) {
             case LOAD_GAME -> {
                 // Load the game

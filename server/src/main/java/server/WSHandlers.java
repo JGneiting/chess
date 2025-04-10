@@ -9,19 +9,16 @@ import dataaccess.SQLAuthDAO;
 import dataaccess.SQLGameDAO;
 import model.AuthData;
 import model.GameData;
-import model.UserData;
 import org.eclipse.jetty.websocket.api.Session;
-import service.GameService;
 import websocket.commands.MakeMoveCommand;
 import websocket.commands.UserGameCommand;
 import websocket.messages.*;
 
-import javax.xml.crypto.Data;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 
-public class WSSHandlers {
+public class WSHandlers {
 
     private static final HashMap<Integer, Collection<Session>> subscriptionLists = new HashMap<>();
     private static final HashMap<ChessPiece.PieceType, String> pieceNames = new HashMap<>() {{
@@ -231,8 +228,44 @@ public class WSSHandlers {
         }
     }
 
-    private static void handleLeave(UserGameCommand command, Session session) {
+    private static void handleLeave(UserGameCommand command, Session session) throws DataAccessException {
+        int gameID = command.getGameID();
+        String authToken = command.getAuthToken();
+        String username = getUsername(authToken);
 
+        // Get user role
+        ChessGame.TeamColor userTeam = userTeam(authToken, gameID);
+
+        // If the user is an observer, just remove them from the subscription list
+        if (userTeam != null) {
+            // Remove the user from the game
+            SQLGameDAO gameDatabase = new SQLGameDAO();
+            GameData gameData = gameDatabase.getGame(gameID);
+            GameData updatedData;
+
+            if (userTeam == ChessGame.TeamColor.WHITE) {
+                updatedData = new GameData(gameData.game(), gameData.gameName(), gameData.blackUsername(), null, gameData.gameID());
+            } else {
+                updatedData = new GameData(gameData.game(), gameData.gameName(), null, gameData.whiteUsername(), gameData.gameID());
+            }
+
+            // Update the game data in the database
+            gameDatabase.updateGame(updatedData);
+        }
+
+        // Notify other subscribers that the user has left
+        String message = username + " has left the game";
+        ServerMessage serverMessage = new NotificationMessage(message);
+        notifySubscribers(gameID, serverMessage, session, false);
+
+        // Remove the user from the subscription list
+        Collection<Session> sessions = subscriptionLists.get(gameID);
+        if (sessions != null) {
+            sessions.remove(session);
+            if (sessions.isEmpty()) {
+                subscriptionLists.remove(gameID);
+            }
+        }
     }
 
     private static void handleResign(UserGameCommand command, Session session) {
