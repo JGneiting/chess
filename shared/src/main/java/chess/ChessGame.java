@@ -211,15 +211,15 @@ public class ChessGame {
     public void makeMove(ChessMove move) throws InvalidMoveException {
         // Check if move is in the valid set of moves for this piece
         ChessPiece piece = board.getPiece(move.getStartPosition());
-        if (piece == null ||
-            piece.getTeamColor() != currentTurn
-            ) {
-            throw new InvalidMoveException();
+        if (piece == null) {
+            throw new InvalidMoveException("No piece at start position");
+        } else if (piece.getTeamColor() != currentTurn) {
+            throw new InvalidMoveException("It is not your turn");
         }
 
         Collection<ChessMove> validMoves = validMoves(move.getStartPosition());
         if (!validMoves.contains(move)) {
-            throw new InvalidMoveException();
+            throw new InvalidMoveException("Invalid move");
         }
 
         ChessMove matchingMove = null;
@@ -252,7 +252,7 @@ public class ChessGame {
      * @param team team to invert
      * @return enemy team color
      */
-    private TeamColor enemyTeam(TeamColor team) {
+    public static TeamColor enemyTeam(TeamColor team) {
         return team == TeamColor.WHITE ? TeamColor.BLACK : TeamColor.WHITE;
     }
 

@@ -290,7 +290,7 @@ public class GameplayUI implements ServerMessageObserver {
     @Override
     public void notify(ServerMessage message) {
         // Determine what kind of message this is
-        System.out.println("Message received");
+        System.out.println();
         switch (message.getServerMessageType()) {
             case LOAD_GAME -> {
                 // Load the game
@@ -301,13 +301,13 @@ public class GameplayUI implements ServerMessageObserver {
             }
             case ERROR -> {
                 // Handle error message
-                System.out.println("\n" + SET_TEXT_COLOR_RED + "Error: " + ((ErrorMessage) message).getError() + RESET_TEXT_COLOR);
+                System.out.println(SET_TEXT_COLOR_RED + "Error: " + ((ErrorMessage) message).getError() + RESET_TEXT_COLOR);
                 // Redraw command prompt
 
             }
             case NOTIFICATION -> {
                 // Handle notification message
-                System.out.println("\n" + SET_TEXT_COLOR_BLUE + ((NotificationMessage) message).getMessage() + RESET_TEXT_COLOR);
+                System.out.println(SET_TEXT_COLOR_BLUE + ((NotificationMessage) message).getMessage() + RESET_TEXT_COLOR);
             }
         }
         ClientLoop.displayStateString(ClientLoop.UIState.GAMEPLAY);

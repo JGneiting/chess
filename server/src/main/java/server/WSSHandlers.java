@@ -1,6 +1,9 @@
 package server;
 
 import chess.ChessGame;
+import chess.ChessMove;
+import chess.ChessPiece;
+import chess.InvalidMoveException;
 import dataaccess.DataAccessException;
 import dataaccess.SQLAuthDAO;
 import dataaccess.SQLGameDAO;
@@ -9,6 +12,7 @@ import model.GameData;
 import model.UserData;
 import org.eclipse.jetty.websocket.api.Session;
 import service.GameService;
+import websocket.commands.MakeMoveCommand;
 import websocket.commands.UserGameCommand;
 import websocket.messages.*;
 
@@ -20,6 +24,19 @@ import java.util.HashMap;
 public class WSSHandlers {
 
     private static final HashMap<Integer, Collection<Session>> subscriptionLists = new HashMap<>();
+    private static final HashMap<ChessPiece.PieceType, String> pieceNames = new HashMap<>() {{
+        put(ChessPiece.PieceType.PAWN, "Pawn");
+        put(ChessPiece.PieceType.ROOK, "Rook");
+        put(ChessPiece.PieceType.KNIGHT, "Knight");
+        put(ChessPiece.PieceType.BISHOP, "Bishop");
+        put(ChessPiece.PieceType.QUEEN, "Queen");
+        put(ChessPiece.PieceType.KING, "King");
+    }};
+    private static final HashMap<ChessGame.TeamColor, String> teamNames = new HashMap<>() {{
+        put(ChessGame.TeamColor.WHITE, "White");
+        put(ChessGame.TeamColor.BLACK, "Black");
+    }};
+    private static final String[] columnNames = {"A", "B", "C", "D", "E", "F", "G", "H"};
 
     private static void sendErrorMessage(Session session, String message) {
         // Create an error message object
@@ -50,7 +67,7 @@ public class WSSHandlers {
                     handleConnect(command, session);
                     break;
                 case MAKE_MOVE:
-                    handleMakeMove(command, session);
+                    handleMakeMove((MakeMoveCommand) command, session);
                     break;
                 case LEAVE:
                     handleLeave(command, session);
@@ -67,32 +84,79 @@ public class WSSHandlers {
         }
     }
 
+    private static void addSubscription(Session session, int gameID) {
+        if (!subscriptionLists.containsKey(gameID)) {
+            subscriptionLists.put(gameID, new ArrayList<>());
+        }
+
+        Collection<Session> sessions = subscriptionLists.get(gameID);
+        sessions.add(session);
+    }
+
+    private static String getUsername(String authToken) throws DataAccessException {
+        // Get the user's username from the auth database
+        SQLAuthDAO authDatabase = new SQLAuthDAO();
+        AuthData auth = authDatabase.getAuth(authToken);
+        return auth.username();
+    }
+
+    private static ChessGame.TeamColor userTeam(String authToken, int gameID) throws DataAccessException {
+        // Get username
+        String username = getUsername(authToken);
+        // Get game data
+        SQLGameDAO gameDatabase = new SQLGameDAO();
+        GameData gameData = gameDatabase.getGame(gameID);
+        String whitePlayer = gameData.whiteUsername();
+        String blackPlayer = gameData.blackUsername();
+        // Determine if the user is white, black, or an observer
+        if (username.equals(whitePlayer)) {
+            return ChessGame.TeamColor.WHITE;
+        } else if (username.equals(blackPlayer)) {
+            return ChessGame.TeamColor.BLACK;
+        } else {
+            return null; // Observer
+        }
+    }
+
+    private static LoadGameMessage generateLoadGameMessage(int gameID) throws DataAccessException {
+        // Get the game data
+        SQLGameDAO gameDatabase = new SQLGameDAO();
+        GameData gameData = gameDatabase.getGame(gameID);
+        // Create a LoadGameMessage object
+        return new LoadGameMessage(gameData.game());
+    }
+
+    private static String convertMoveToText(String username, ChessMove move, ChessGame game) {
+        // Get the text representation of the piece at the source square
+        ChessPiece piece = game.getBoard().getPiece(move.getEndPosition());
+        String pieceName = pieceNames.get(piece.getPieceType());
+        // Get the text representation of the destination square
+        String destSquare = columnNames[move.getEndPosition().getColumn()-1] + (move.getEndPosition().getRow());
+        // Convert the move to a text representation
+        return username + " performed the move " + pieceName + " to " + destSquare;
+    }
+
     private static void handleConnect(UserGameCommand command, Session session) throws DataAccessException {
         // Add the user to the subscription list for the game
         int gameID = command.getGameID();
         addSubscription(session, gameID);
 
-        // We need to determine if this user is a player or an observer. To do this, see if their user is assigned
-        // to the game. If they are, they are a player. If not, they are an observer.
-        SQLGameDAO gameDatabase = new SQLGameDAO();
-        GameData gameData = gameDatabase.getGame(gameID);
-        String whitePlayer = gameData.whiteUsername();
-        String blackPlayer = gameData.blackUsername();
-
-        String username = getUsername(command);
+        // Get the user's role
+        ChessGame.TeamColor userTeam = userTeam(command.getAuthToken(), gameID);
 
         // Determine if the user has connected as white, black, or observer
         String userType;
-        if (username.equals(whitePlayer)) {
+        if (userTeam == ChessGame.TeamColor.WHITE) {
             userType = "WHITE";
-        } else if (username.equals(blackPlayer)) {
+        } else if (userTeam == ChessGame.TeamColor.BLACK) {
             userType = "BLACK";
         } else {
             userType = "an observer";
         }
 
+        String username = getUsername(command.getAuthToken());
         // Send a LOAD_GAME message to the user
-        LoadGameMessage loadMessage = new LoadGameMessage(gameData.game());
+        LoadGameMessage loadMessage = generateLoadGameMessage(gameID);
         System.out.println("Sending LOAD_GAME message to " + username);
         WSServer.sendMessage(session, loadMessage);
 
@@ -103,25 +167,68 @@ public class WSSHandlers {
         notifySubscribers(gameID, serverMessage, session, false);
     }
 
-    private static void addSubscription(Session session, int gameID) {
-        if (!subscriptionLists.containsKey(gameID)) {
-            subscriptionLists.put(gameID, new ArrayList<>());
+    private static void handleMakeMove(MakeMoveCommand command, Session session) throws DataAccessException {
+        int gameID = command.getGameID();
+        // Get user team
+        ChessGame.TeamColor userTeamColor = userTeam(command.getAuthToken(), command.getGameID());
+
+        if (userTeamColor == null) {
+            sendErrorMessage(session, "You are an observer in this game");
+            return;
         }
 
-        Collection<Session> sessions = subscriptionLists.get(gameID);
-        sessions.add(session);
-    }
+        ChessMove move = command.getMove();
+        // Get the chess game
+        SQLGameDAO gameDatabase = new SQLGameDAO();
+        GameData gameData = gameDatabase.getGame(command.getGameID());
+        ChessGame game = gameData.game();
 
-    private static String getUsername(UserGameCommand command) throws DataAccessException {
-        // Get the user's username from the auth database
-        SQLAuthDAO authDatabase = new SQLAuthDAO();
-        AuthData auth = authDatabase.getAuth(command.getAuthToken());
-        String username = auth.username();
-        return username;
-    }
+        // Verify the user owns the source piece
+        ChessPiece target = game.getBoard().getPiece(move.getStartPosition());
+        if (target == null) {
+            sendErrorMessage(session, "No piece at source position");
+            return;
+        } else if (target.getTeamColor() != userTeamColor) {
+            sendErrorMessage(session, "You do not own the piece at source position");
+            return;
+        }
 
-    private static void handleMakeMove(UserGameCommand command, Session session) {
+        // Make the move
+        try {
+            game.makeMove(move);
+        } catch (InvalidMoveException e) {
+            sendErrorMessage(session, e.getMessage());
+            return;
+        }
 
+        // Update the game data in the database
+        gameDatabase.updateGame(gameData);
+
+        // Notify all subscribers to update their boards
+        LoadGameMessage loadMessage = generateLoadGameMessage(command.getGameID());
+        notifySubscribers(gameID, loadMessage, session, true);
+
+        // Notify other subscribers of the move
+        String username = getUsername(command.getAuthToken());
+        String message = convertMoveToText(username, move, game);
+        ServerMessage serverMessage = new NotificationMessage(message);
+        notifySubscribers(gameID, serverMessage, session, false);
+
+        // Check for check, checkmate, or stalemate
+        ChessGame.TeamColor enemy = ChessGame.enemyTeam(userTeamColor);
+        if (game.isInCheckmate(enemy)) {
+            String checkmateMessage = "Checkmate! " + username + " (" + teamNames.get(userTeamColor) + ") wins!";
+            ServerMessage checkmateNotification = new NotificationMessage(checkmateMessage);
+            notifySubscribers(gameID, checkmateNotification, session, true);
+        } else if (game.isInStalemate(enemy)) {
+            String stalemateMessage = "Stalemate! The game is a draw.";
+            ServerMessage stalemateNotification = new NotificationMessage(stalemateMessage);
+            notifySubscribers(gameID, stalemateNotification, session, true);
+        } else if (game.isInCheck(enemy)) {
+            String checkMessage = "Check!";
+            ServerMessage checkNotification = new NotificationMessage(checkMessage);
+            notifySubscribers(gameID, checkNotification, session, true);
+        }
     }
 
     private static void handleLeave(UserGameCommand command, Session session) {

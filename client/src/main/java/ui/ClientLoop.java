@@ -73,7 +73,8 @@ public class ClientLoop {
                 System.out.print("[LOGGED_IN] >>> ");
                 break;
             case GAMEPLAY:
-                System.out.print("[GAMEPLAY] >>> ");
+                // Output looks better with no headers in gameplay state
+//                System.out.print("[GAMEPLAY] >>> ");
                 break;
             default:
                 System.out.print("Invalid state.");
