@@ -1,6 +1,9 @@
 package ui;
 
 import chess.*;
+import websocket.messages.ErrorMessage;
+import websocket.messages.LoadGameMessage;
+import websocket.messages.NotificationMessage;
 import websocket.messages.ServerMessage;
 
 import java.util.ArrayList;
@@ -286,6 +289,27 @@ public class GameplayUI implements ServerMessageObserver {
 
     @Override
     public void notify(ServerMessage message) {
+        // Determine what kind of message this is
+        System.out.println("Message received");
+        switch (message.getServerMessageType()) {
+            case LOAD_GAME -> {
+                // Load the game
+                ChessGame loadedGame = ((LoadGameMessage) message).getGame();
+                setGame(loadedGame);
+                Collection<String> board = convertBoard();
+                drawBoard(board);
+            }
+            case ERROR -> {
+                // Handle error message
+                System.out.println("\n" + SET_TEXT_COLOR_RED + "Error: " + ((ErrorMessage) message).getError() + RESET_TEXT_COLOR);
+                // Redraw command prompt
 
+            }
+            case NOTIFICATION -> {
+                // Handle notification message
+                System.out.println("\n" + SET_TEXT_COLOR_BLUE + ((NotificationMessage) message).getMessage() + RESET_TEXT_COLOR);
+            }
+        }
+        ClientLoop.displayStateString(ClientLoop.UIState.GAMEPLAY);
     }
 }

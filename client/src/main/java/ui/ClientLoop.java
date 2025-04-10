@@ -25,8 +25,8 @@ public class ClientLoop {
         return in.split(" ");
     }
 
-    public ClientLoop(String serverUrl) throws Exception {
-        facade = new ServerFacade(serverUrl, 80, 8080);
+    public ClientLoop(String serverUrl, int port) throws Exception {
+        facade = new ServerFacade(serverUrl, port, port);
     }
 
     public void run() {

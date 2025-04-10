@@ -3,9 +3,9 @@ import ui.ClientLoop;
 
 public class Main {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         // args[0] should be the server URL
-        ClientLoop runner = new ClientLoop(args[0]);
+        ClientLoop runner = new ClientLoop(args[0], Integer.parseInt(args[1]));
 
         runner.run();
 

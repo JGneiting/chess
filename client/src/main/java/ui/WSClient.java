@@ -1,6 +1,8 @@
 package ui;
 
+import chess.ChessGame;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import websocket.messages.ErrorMessage;
 import websocket.messages.LoadGameMessage;
 import websocket.messages.NotificationMessage;
@@ -30,13 +32,18 @@ public class WSClient extends Endpoint {
 
     private void messageReceived(String message) {
         // Deserialize the message
-        ServerMessage serverMessage = new Gson().fromJson(message, ServerMessage.class);
+        GsonBuilder gsonBuilder = new GsonBuilder();
+        gsonBuilder.registerTypeAdapter(ChessGame.class, new ChessGame.ChessGameAdapter());
+        gsonBuilder.registerTypeAdapter(ChessGame.class, new ChessGame.ChessGameDeserializer());
+        Gson serializer = gsonBuilder.create();
+
+        ServerMessage serverMessage = serializer.fromJson(message, ServerMessage.class);
         if (serverMessage.getServerMessageType() == ServerMessage.ServerMessageType.LOAD_GAME) {
-            serverMessage = new Gson().fromJson(message, LoadGameMessage.class);
+            serverMessage = serializer.fromJson(message, LoadGameMessage.class);
         } else if (serverMessage.getServerMessageType() == ServerMessage.ServerMessageType.NOTIFICATION) {
-            serverMessage = new Gson().fromJson(message, NotificationMessage.class);
+            serverMessage = serializer.fromJson(message, NotificationMessage.class);
         } else if (serverMessage.getServerMessageType() == ServerMessage.ServerMessageType.ERROR) {
-            serverMessage = new Gson().fromJson(message, ErrorMessage.class);
+            serverMessage = serializer.fromJson(message, ErrorMessage.class);
         }
         // Notify the observer
         if (observer != null) {
