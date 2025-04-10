@@ -34,8 +34,8 @@ public class GameplayUI implements ServerMessageObserver {
     private static final String BOARD_DARK_HIGHLIGHT_COLOR = SET_BG_COLOR_DARK_BLUE + SET_TEXT_COLOR_DARK_BLUE;
     private static final String BOARD_LIGHT_SQUARE_HIGHLIGHT_COLOR = SET_BG_COLOR_LIGHT_BLUE + SET_TEXT_COLOR_BLACK;
     private static final String BOARD_DARK_SQUARE_HIGHLIGHT_COLOR = SET_BG_COLOR_DARK_BLUE + SET_TEXT_COLOR_BLACK;
-    private static final String BOARD_LIGHT_SQUARE_SELECT_COLOR = SET_BG_COLOR_LIGHT_YELLOW + SET_TEXT_COLOR_BLACK;
-    private static final String BOARD_DARK_SQUARE_SELECT_COLOR = SET_BG_COLOR_DARK_YELLOW + SET_TEXT_COLOR_BLACK;
+    private static final String BOARD_LIGHT_SQUARE_SELECT_COLOR = SET_BG_COLOR_LIGHT_PURPLE + SET_TEXT_COLOR_BLACK;
+    private static final String BOARD_DARK_SQUARE_SELECT_COLOR = SET_BG_COLOR_DARK_PURPLE + SET_TEXT_COLOR_BLACK;
     private static final String WHITE_PIECE_COLOR = SET_TEXT_COLOR_WHITE;
     private static final String BLACK_PIECE_COLOR = SET_TEXT_COLOR_BLACK;
 
@@ -230,54 +230,7 @@ public class GameplayUI implements ServerMessageObserver {
         for (int i = white ? 1 : 8; white ? i < 9 : i > 0; i += white ? 1 : -1) {
             StringBuilder row = new StringBuilder();
             for (int j = white ? 1 : 8; white ? j < 9 : j > 0; j+= white ? 1 : -1) {
-                ChessPiece piece = gameBoard.getPiece(new ChessPosition(9-i, j));
-                boolean highlight = false;
-                for (ChessPosition pos : highlightedPositions) {
-                    if (pos.equals(new ChessPosition(9-i, j))) {
-                        highlight = true;
-                        break;
-                    }
-                }
-                boolean selected = selectedPosition != null && selectedPosition.equals(new ChessPosition(9-i, j));
-                if ((i + j) % 2 == 0) {
-                    if (highlight)
-                        row.append(BOARD_LIGHT_SQUARE_HIGHLIGHT_COLOR);
-                    else if (selected)
-                        row.append(BOARD_LIGHT_SQUARE_SELECT_COLOR);
-                    else
-                        row.append(BOARD_LIGHT_SQUARE_COLOR);
-                } else {
-                    if (highlight)
-                        row.append(BOARD_DARK_SQUARE_HIGHLIGHT_COLOR);
-                    else if (selected)
-                        row.append(BOARD_DARK_SQUARE_SELECT_COLOR);
-                    else
-                        row.append(BOARD_DARK_SQUARE_COLOR);
-                }
-
-                // Set the color of the piece
-                if (piece != null) {
-                    if (piece.getTeamColor() == ChessGame.TeamColor.BLACK) {
-                        row.append(BLACK_PIECE_COLOR);
-                        row.append(pieceMap.get(piece.getPieceType()));
-                    } else {
-                        row.append(WHITE_PIECE_COLOR);
-                        row.append(pieceMap.get(piece.getPieceType()));
-                    }
-                } else {
-                    if ((i + j) % 2 == 0) {
-                        if (highlight)
-                            row.append(BOARD_LIGHT_HIGHLIGHT_COLOR);
-                        else
-                            row.append(BOARD_LIGHT_SQUARE_COLOR);
-                    } else {
-                        if (highlight)
-                            row.append(BOARD_DARK_HIGHLIGHT_COLOR);
-                        else
-                            row.append(BOARD_DARK_SQUARE_COLOR);
-                    }
-                    row.append(pieceMap.get(ChessPiece.PieceType.PAWN));
-                }
+                generateSquare(highlightedPositions, selectedPosition, gameBoard, i, j, row);
             }
             row.append(RESET_BG_COLOR);
             row.append(RESET_TEXT_COLOR);
@@ -285,6 +238,61 @@ public class GameplayUI implements ServerMessageObserver {
         }
 
         return board;
+    }
+
+    private void generateSquare(Collection<ChessPosition> highlightedPositions, ChessPosition selectedPosition, ChessBoard gameBoard, int i, int j, StringBuilder row) {
+        ChessPiece piece = gameBoard.getPiece(new ChessPosition(9- i, j));
+        boolean highlight = false;
+        for (ChessPosition pos : highlightedPositions) {
+            if (pos.equals(new ChessPosition(9- i, j))) {
+                highlight = true;
+                break;
+            }
+        }
+        boolean selected = selectedPosition != null && selectedPosition.equals(new ChessPosition(9- i, j));
+        if ((i + j) % 2 == 0) {
+            if (highlight) {
+                row.append(BOARD_LIGHT_SQUARE_HIGHLIGHT_COLOR);
+            } else if (selected) {
+                row.append(BOARD_LIGHT_SQUARE_SELECT_COLOR);
+            } else {
+                row.append(BOARD_LIGHT_SQUARE_COLOR);
+            }
+        } else {
+            if (highlight) {
+                row.append(BOARD_DARK_SQUARE_HIGHLIGHT_COLOR);
+            } else if (selected) {
+                row.append(BOARD_DARK_SQUARE_SELECT_COLOR);
+            } else {
+                row.append(BOARD_DARK_SQUARE_COLOR);
+            }
+        }
+
+        // Set the color of the piece
+        if (piece != null) {
+            if (piece.getTeamColor() == ChessGame.TeamColor.BLACK) {
+                row.append(BLACK_PIECE_COLOR);
+                row.append(pieceMap.get(piece.getPieceType()));
+            } else {
+                row.append(WHITE_PIECE_COLOR);
+                row.append(pieceMap.get(piece.getPieceType()));
+            }
+        } else {
+            if ((i + j) % 2 == 0) {
+                if (highlight) {
+                    row.append(BOARD_LIGHT_HIGHLIGHT_COLOR);
+                } else {
+                    row.append(BOARD_LIGHT_SQUARE_COLOR);
+                }
+            } else {
+                if (highlight) {
+                    row.append(BOARD_DARK_HIGHLIGHT_COLOR);
+                } else {
+                    row.append(BOARD_DARK_SQUARE_COLOR);
+                }
+            }
+            row.append(pieceMap.get(ChessPiece.PieceType.PAWN));
+        }
     }
 
     @Override

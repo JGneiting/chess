@@ -5,7 +5,6 @@ import com.google.gson.*;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -19,14 +18,14 @@ public class ChessGame {
     TeamColor currentTurn;
     ChessBoard board;
     TeamColor winner;
-    boolean game_over;
+    boolean gameOver;
 
     public ChessGame() {
         currentTurn = TeamColor.WHITE;
         board = new ChessBoard();
         board.resetBoard();
         winner = null;
-        game_over = false;
+        gameOver = false;
     }
 
     /**
@@ -64,7 +63,7 @@ public class ChessGame {
 
     public void markWinner(TeamColor team) {
         winner = team;
-        game_over = true;
+        gameOver = true;
     }
 
     public TeamColor getWinner() {
@@ -72,7 +71,7 @@ public class ChessGame {
     }
 
     public boolean isGameOver() {
-        return game_over;
+        return gameOver;
     }
 
     /**
@@ -228,7 +227,7 @@ public class ChessGame {
     public void makeMove(ChessMove move) throws InvalidMoveException {
         // Check if move is in the valid set of moves for this piece
         ChessPiece piece = board.getPiece(move.getStartPosition());
-        if (game_over) {
+        if (gameOver) {
             throw new InvalidMoveException("Game is over");
         } else if (piece == null) {
             throw new InvalidMoveException("No piece at start position");
@@ -269,7 +268,7 @@ public class ChessGame {
         if (isInCheckmate(currentTurn)) {
             markWinner(currentTurn);
         } else if (isInStalemate(currentTurn)) {
-            game_over = true;
+            gameOver = true;
         }
     }
 
@@ -422,7 +421,7 @@ public class ChessGame {
     }
 
     private void setGameOver(boolean gameOver) {
-        this.game_over = gameOver;
+        this.gameOver = gameOver;
     }
 
     private void setWinner(TeamColor winner) {

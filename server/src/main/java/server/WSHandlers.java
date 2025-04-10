@@ -9,7 +9,6 @@ import dataaccess.SQLAuthDAO;
 import dataaccess.SQLGameDAO;
 import model.AuthData;
 import model.GameData;
-import org.eclipse.jetty.server.Authentication;
 import org.eclipse.jetty.websocket.api.Session;
 import websocket.commands.MakeMoveCommand;
 import websocket.commands.UserGameCommand;
@@ -21,9 +20,9 @@ import java.util.HashMap;
 
 public class WSHandlers {
 
-    private static final HashMap<Integer, Collection<Session>> subscriptionLists = new HashMap<>();
-    private static final HashMap<Session, String> authTokenLookup = new HashMap<>();
-    private static final HashMap<ChessPiece.PieceType, String> pieceNames = new HashMap<>() {{
+    private static final HashMap<Integer, Collection<Session>> SUBSCRIPTION_LISTS = new HashMap<>();
+    private static final HashMap<Session, String> AUTH_TOKEN_LOOKUP = new HashMap<>();
+    private static final HashMap<ChessPiece.PieceType, String> PIECE_NAMES = new HashMap<>() {{
         put(ChessPiece.PieceType.PAWN, "Pawn");
         put(ChessPiece.PieceType.ROOK, "Rook");
         put(ChessPiece.PieceType.KNIGHT, "Knight");
@@ -31,11 +30,11 @@ public class WSHandlers {
         put(ChessPiece.PieceType.QUEEN, "Queen");
         put(ChessPiece.PieceType.KING, "King");
     }};
-    private static final HashMap<ChessGame.TeamColor, String> teamNames = new HashMap<>() {{
+    private static final HashMap<ChessGame.TeamColor, String> TEAM_NAMES = new HashMap<>() {{
         put(ChessGame.TeamColor.WHITE, "White");
         put(ChessGame.TeamColor.BLACK, "Black");
     }};
-    private static final String[] columnNames = {"A", "B", "C", "D", "E", "F", "G", "H"};
+    private static final String[] COLUMN_NAMES = {"A", "B", "C", "D", "E", "F", "G", "H"};
 
     private static void sendErrorMessage(Session session, String message) {
         // Create an error message object
@@ -46,7 +45,7 @@ public class WSHandlers {
 
     private static void notifySubscribers(int gameID, ServerMessage message, Session currSess, boolean includeSelf) {
         // Get the list of subscribers for the game
-        Collection<Session> sessions = subscriptionLists.get(gameID);
+        Collection<Session> sessions = SUBSCRIPTION_LISTS.get(gameID);
         if (sessions != null) {
             for (Session session : sessions) {
                 // If includeSelf is false, skip the current session
@@ -116,10 +115,10 @@ public class WSHandlers {
 
     public static void handleDisconnect(Session session) {
         // Remove the session from all subscription lists
-        for (Integer gameID : subscriptionLists.keySet()) {
+        for (Integer gameID : SUBSCRIPTION_LISTS.keySet()) {
             removeSubscription(session, gameID);
             // For each game the user was subscribed to, mock a leave command to notify others
-            UserGameCommand leaveCommand = new UserGameCommand(UserGameCommand.CommandType.LEAVE, authTokenLookup.get(session), gameID);
+            UserGameCommand leaveCommand = new UserGameCommand(UserGameCommand.CommandType.LEAVE, AUTH_TOKEN_LOOKUP.get(session), gameID);
             try {
                 handleLeave(leaveCommand, session);
             } catch (DataAccessException e) {
@@ -128,15 +127,15 @@ public class WSHandlers {
         }
 
         // Remove the session from the auth token lookup
-        authTokenLookup.remove(session);
+        AUTH_TOKEN_LOOKUP.remove(session);
     }
 
     private static void addSubscription(Session session, int gameID) {
-        if (!subscriptionLists.containsKey(gameID)) {
-            subscriptionLists.put(gameID, new ArrayList<>());
+        if (!SUBSCRIPTION_LISTS.containsKey(gameID)) {
+            SUBSCRIPTION_LISTS.put(gameID, new ArrayList<>());
         }
 
-        Collection<Session> sessions = subscriptionLists.get(gameID);
+        Collection<Session> sessions = SUBSCRIPTION_LISTS.get(gameID);
         sessions.add(session);
     }
 
@@ -176,9 +175,9 @@ public class WSHandlers {
     private static String convertMoveToText(String username, ChessMove move, ChessGame game) {
         // Get the text representation of the piece at the source square
         ChessPiece piece = game.getBoard().getPiece(move.getEndPosition());
-        String pieceName = pieceNames.get(piece.getPieceType());
+        String pieceName = PIECE_NAMES.get(piece.getPieceType());
         // Get the text representation of the destination square
-        String destSquare = columnNames[move.getEndPosition().getColumn()-1] + (move.getEndPosition().getRow());
+        String destSquare = COLUMN_NAMES[move.getEndPosition().getColumn()-1] + (move.getEndPosition().getRow());
         // Convert the move to a text representation
         return username + " performed the move " + pieceName + " to " + destSquare;
     }
@@ -190,8 +189,8 @@ public class WSHandlers {
         addSubscription(session, gameID);
 
         // If this user's auth token is not already in the lookup, add it
-        if (!authTokenLookup.containsKey(session)) {
-            authTokenLookup.put(session, authToken);
+        if (!AUTH_TOKEN_LOOKUP.containsKey(session)) {
+            AUTH_TOKEN_LOOKUP.put(session, authToken);
         }
 
         // Get the user's role
@@ -238,7 +237,7 @@ public class WSHandlers {
 
         // If the game is over, do not allow moves
         if (game.isGameOver()) {
-            String winner = teamNames.get(game.getWinner());
+            String winner = TEAM_NAMES.get(game.getWinner());
             if (winner != null) {
                 sendErrorMessage(session, winner + " has already won. No more moves allowed.");
             } else {
@@ -281,7 +280,7 @@ public class WSHandlers {
         // Check for check, checkmate, or stalemate
         ChessGame.TeamColor enemy = ChessGame.enemyTeam(userTeamColor);
         if (game.isInCheckmate(enemy)) {
-            String checkmateMessage = "Checkmate! " + username + " (" + teamNames.get(userTeamColor) + ") wins!";
+            String checkmateMessage = "Checkmate! " + username + " (" + TEAM_NAMES.get(userTeamColor) + ") wins!";
             ServerMessage checkmateNotification = new NotificationMessage(checkmateMessage);
             notifySubscribers(gameID, checkmateNotification, session, true);
         } else if (game.isInStalemate(enemy)) {
@@ -330,11 +329,11 @@ public class WSHandlers {
     }
 
     private static void removeSubscription(Session session, int gameID) {
-        Collection<Session> sessions = subscriptionLists.get(gameID);
+        Collection<Session> sessions = SUBSCRIPTION_LISTS.get(gameID);
         if (sessions != null) {
             sessions.remove(session);
             if (sessions.isEmpty()) {
-                subscriptionLists.remove(gameID);
+                SUBSCRIPTION_LISTS.remove(gameID);
             }
         }
     }
@@ -358,7 +357,7 @@ public class WSHandlers {
 
         // Can't resign if the game is already over
         if (game.isGameOver()) {
-            String winner = teamNames.get(game.getWinner());
+            String winner = TEAM_NAMES.get(game.getWinner());
             if (winner != null) {
                 sendErrorMessage(session, winner + " has already won. No more resignations allowed.");
             } else {
@@ -372,7 +371,7 @@ public class WSHandlers {
         gameDatabase.updateGame(gameData);
 
         // Notify all subscribers of the resignation
-        String message = username + " has resigned. " + teamNames.get(ChessGame.enemyTeam(userTeam)) + " wins!";
+        String message = username + " has resigned. " + TEAM_NAMES.get(ChessGame.enemyTeam(userTeam)) + " wins!";
         ServerMessage serverMessage = new NotificationMessage(message);
         notifySubscribers(gameID, serverMessage, session, true);
     }
