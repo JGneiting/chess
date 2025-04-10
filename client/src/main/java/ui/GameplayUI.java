@@ -16,7 +16,7 @@ public class GameplayUI implements ServerMessageObserver {
             String.format("""
             %sredraw%s - Redraw the board
             %sleave%s - Leave the game
-            %smove <FROM> <TO>%s - Move piece from FROM to TO
+            %smove <FROM> <TO> [QUEEN|ROOK|BISHOP|KNIGHT]%s - Move piece from FROM to TO, upgrading to indicated piece if applicable
             %sresign%s - Resign from the game
             %shighlight <POSITION>%s - Highlight valid moves for piece at POSITION
             %shelp%s - List available commands%s""",
@@ -43,6 +43,13 @@ public class GameplayUI implements ServerMessageObserver {
     private final String[] columnLabels = {
             "8", "7", "6", "5", "4", "3", "2", "1"
     };
+
+    private final HashMap<String, ChessPiece.PieceType> pieceUpgradeMap = new HashMap<>() {{
+        put("QUEEN", ChessPiece.PieceType.QUEEN);
+        put("BISHOP", ChessPiece.PieceType.BISHOP);
+        put("KNIGHT", ChessPiece.PieceType.KNIGHT);
+        put("ROOK", ChessPiece.PieceType.ROOK);
+    }};
 
     private final HashMap<ChessPiece.PieceType, String> pieceMap = new HashMap<>() {{
         put(ChessPiece.PieceType.KING, BLACK_KING);
@@ -96,31 +103,43 @@ public class GameplayUI implements ServerMessageObserver {
             case "leave" -> {
                 // Expect exactly one argument
                 ClientLoop.expectCommandCount(command, 1);
+                // Send leave request
+                facade.leaveGame(ClientLoop.getAuthToken(), gameID);
                 yield ClientLoop.UIState.LOG_IN;
             }
             case "move" -> {
-                // Expect exactly three arguments
-                ClientLoop.expectCommandCount(command, 3);
+                // Expect 3-4 arguments
+                if (command.length < 3 || command.length > 4) {
+                    throw new IllegalArgumentException("Invalid number of arguments. Expected 3 or 4.");
+                }
+                // If there are four arguments, the last one must be a piece name
+                ChessPiece.PieceType upgrade = null;
+                if (command.length == 4) {
+                    if (!pieceUpgradeMap.containsKey(command[3].toUpperCase())) {
+                        throw new IllegalArgumentException("Invalid piece name. Must be one of: QUEEN, ROOK, BISHOP, KNIGHT.");
+                    }
+                    upgrade = pieceUpgradeMap.get(command[3].toUpperCase());
+                }
                 // Send move request
+                ChessPosition source = convertToPosition(command[1]);
+                ChessPosition destination = convertToPosition(command[2]);
+                ChessMove move = new ChessMove(source, destination, upgrade);
 
+                facade.makeMove(move, ClientLoop.getAuthToken(), gameID);
                 yield ClientLoop.UIState.GAMEPLAY;
             }
             case "resign" -> {
                 // Expect exactly one argument
                 ClientLoop.expectCommandCount(command, 1);
                 // Send resign message
+                facade.resignGame(ClientLoop.getAuthToken(), gameID);
                 yield ClientLoop.UIState.LOG_IN;
             }
             case "highlight" -> {
                 // Expect exactly two arguments
                 ClientLoop.expectCommandCount(command, 2);
-                // Check that the square matches pattern of a chess position
-                if (!command[1].matches("[A-H][1-8]")) {
-                    throw new IllegalArgumentException("Invalid position. Use format <LETTER><NUMBER>.");
-                }
-                int row = command[1].charAt(1) - '0';
-                int column = command[1].charAt(0) - 'A' + 1;
-                ChessPosition selectedPosition = new ChessPosition(row, column);
+
+                ChessPosition selectedPosition = convertToPosition(command[1]);
                 // Get the valid moves for the piece at the selected position
                 Collection<ChessMove> validMoves = game.validMoves(selectedPosition);
                 Collection<ChessPosition> highlightedPositions = new ArrayList<>();
@@ -141,6 +160,19 @@ public class GameplayUI implements ServerMessageObserver {
             }
             default -> throw new IllegalArgumentException("Invalid command. Type 'help' for a list of commands.");
         };
+    }
+
+    private ChessPosition convertToPosition(String position) {
+        // Uppercase the position
+        position = position.toUpperCase();
+        // Check the position is valid
+        if (!position.matches("[A-H][1-8]")) {
+            throw new IllegalArgumentException("Invalid position. Use format <LETTER><NUMBER>.");
+        }
+        // Convert the position to a ChessPosition object
+        int row = position.charAt(1) - '0';
+        int column = position.charAt(0) - 'A' + 1;
+        return new ChessPosition(row, column);
     }
 
     private void drawBoard(Collection<String> board) {

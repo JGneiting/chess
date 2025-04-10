@@ -1,10 +1,12 @@
 package ui;
 
 import chess.ChessGame;
+import chess.ChessMove;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import model.*;
+import websocket.commands.MakeMoveCommand;
 import websocket.commands.UserGameCommand;
 
 import java.io.IOException;
@@ -65,5 +67,41 @@ public class ServerFacade {
 
     public void connectWS(String authToken, int gameID) {
          // send CONNECT message to the websocket
+        UserGameCommand command = new UserGameCommand(UserGameCommand.CommandType.CONNECT, authToken, gameID);
+        try {
+            ws.send(command);
+        } catch (Exception e) {
+            throw new RuntimeException("Error sending command to server");
+        }
+    }
+
+    public void makeMove(ChessMove move, String authToken, int gameID) {
+        // send MAKE_MOVE message to the websocket
+        MakeMoveCommand command = new MakeMoveCommand(authToken, gameID, move);
+        try {
+            ws.send(command);
+        } catch (Exception e) {
+            throw new RuntimeException("Error sending command to server");
+        }
+    }
+
+    public void leaveGame(String authToken, int gameID) {
+        // send LEAVE message to the websocket
+        UserGameCommand command = new UserGameCommand(UserGameCommand.CommandType.LEAVE, authToken, gameID);
+        try {
+            ws.send(command);
+        } catch (Exception e) {
+            throw new RuntimeException("Error sending command to server");
+        }
+    }
+
+    public void resignGame(String authToken, int gameID) {
+        // send RESIGN message to the websocket
+        UserGameCommand command = new UserGameCommand(UserGameCommand.CommandType.RESIGN, authToken, gameID);
+        try {
+            ws.send(command);
+        } catch (Exception e) {
+            throw new RuntimeException("Error sending command to server");
+        }
     }
 }
