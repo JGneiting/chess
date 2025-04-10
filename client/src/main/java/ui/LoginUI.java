@@ -71,6 +71,7 @@ public class LoginUI {
                 ClientLoop.facade.joinGame(joinRequest);
                 GameplayUI.setRole(command[2]);
                 GameplayUI.setGameID(gameID);
+                ClientLoop.facade.connectWS(ClientLoop.getAuthToken(), gameID);
                 yield ClientLoop.UIState.GAMEPLAY;
             case "observe":
                 // Expect exactly 2 arguments
@@ -82,6 +83,7 @@ public class LoginUI {
 //                System.out.println(SET_TEXT_COLOR_RED + "Observe not implemented" + RESET_TEXT_COLOR);
                 GameplayUI.setRole("OBSERVER");
                 GameplayUI.setGameID(gameID);
+                ClientLoop.facade.connectWS(ClientLoop.getAuthToken(), gameID);
                 yield ClientLoop.UIState.GAMEPLAY;
             case "logout":
                 // Expect exactly one argument

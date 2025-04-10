@@ -74,6 +74,7 @@ public class GameplayUI implements ServerMessageObserver {
     public GameplayUI(ServerFacade facade) {
         // Set the role for the game
         this.facade = facade;
+        this.facade.registerObserver(this);
     }
 
     public ClientLoop.UIState gameplayOptions(String input) {
