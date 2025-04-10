@@ -1,9 +1,12 @@
 package server;
 
 import dataaccess.DataAccessException;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
+import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import service.ServiceError;
 import spark.*;
 
+@WebSocket
 public class Server {
 
     public int run(int desiredPort) {

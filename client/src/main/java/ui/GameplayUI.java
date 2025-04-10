@@ -1,6 +1,7 @@
 package ui;
 
 import chess.*;
+import websocket.messages.ServerMessage;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -9,7 +10,7 @@ import java.util.HashMap;
 import static ui.EscapeSequences.*;
 import static ui.EscapeSequences.RESET_TEXT_COLOR;
 
-public class GameplayUI {
+public class GameplayUI implements ServerMessageObserver {
 
     private final String gameplay =
             String.format("""
@@ -248,5 +249,10 @@ public class GameplayUI {
         }
 
         return board;
+    }
+
+    @Override
+    public void notify(ServerMessage message) {
+
     }
 }

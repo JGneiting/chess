@@ -68,8 +68,11 @@ public class ChessGame {
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
         // A move is valid if moving that piece will not result in the king being in check
         ChessPiece piece = board.getPiece(startPosition);
-        Collection<ChessMove> baseMoves = piece.pieceMoves(board, startPosition);
         Collection<ChessMove> validMoves = new ArrayList<>();
+        if (piece == null) {
+            throw new IllegalArgumentException("No piece at start position");
+        }
+        Collection<ChessMove> baseMoves = piece.pieceMoves(board, startPosition);
         TeamColor pieceTeam = piece.getTeamColor();
 
         // Save a copy of the board
